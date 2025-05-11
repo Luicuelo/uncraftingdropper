@@ -176,6 +176,29 @@ public class BlockUncraftingdropper extends BlockTileEntity<TileEntityUncrafting
     public TileEntity createTileEntity(World world, IBlockState state) {
         return new TileEntityUncraftingdropper();
     }
+    
+    
+    public void updateInventoryPosInFrontPosition(World worldIn, BlockPos pos,IBlockState state) {
+    	TileEntity tileEntityUncrafting = worldIn.getTileEntity(pos);
+        if (!(tileEntityUncrafting instanceof TileEntityUncraftingdropper)) return;        
+        TileEntityUncraftingdropper myTileEntityUncraftingdropper = (TileEntityUncraftingdropper) tileEntityUncrafting;
+
+        BlockPos posCheck = pos.offset(state.getValue(FACING));        
+        TileEntity tileEntityToCheck = worldIn.getTileEntity(posCheck);
+        myTileEntityUncraftingdropper.inventoryPos = (tileEntityToCheck instanceof IInventory) ? posCheck : null;
+    }
+    
+    public void updateInventoryPosInFrontPosition(World worldIn, BlockPos pos) {	
+        IBlockState blockStateUncrafting = worldIn.getBlockState(pos);        
+        updateInventoryPosInFrontPosition(worldIn, pos, blockStateUncrafting);
+
+    }
+    
+	@Override
+	protected void onNeighborChange(World world, BlockPos pos, IBlockState state, Block blockIn, BlockPos fromPos) {
+		updateInventoryPosInFrontPosition(world, pos, state);
+		
+	}
 
     public void setPowerProperty(World world, BlockPos pos, boolean powered) {
     	//call changePower
@@ -229,26 +252,7 @@ public class BlockUncraftingdropper extends BlockTileEntity<TileEntityUncrafting
 	}
 
 
-    public void updateInventoryPosInFrontPosition(World worldIn, BlockPos pos) {	
-        IBlockState blockStateUncrafting = worldIn.getBlockState(pos);
-        TileEntity tileEntityUncrafting = worldIn.getTileEntity(pos);
 
-        // Ensure the tile entity is a TileEntityUncraftingdropper
-        if (!(tileEntityUncrafting instanceof TileEntityUncraftingdropper)) return;
-
-        EnumFacing enumfacing = blockStateUncrafting.getValue(BlockUncraftingdropper.FACING);
-        TileEntityUncraftingdropper myTileEntityUncraftingdropper = (TileEntityUncraftingdropper) tileEntityUncrafting;
-        myTileEntityUncraftingdropper.inventoryPos = null;
-
-        // Get the position in front of the block
-        BlockPos posCheck = pos.offset(enumfacing);
-
-        // Check if the block at posCheck has a tile entity with an inventory
-        TileEntity tileEntityToCheck = worldIn.getTileEntity(posCheck);
-        if (tileEntityToCheck!=null&&tileEntityToCheck instanceof IInventory) {
-            myTileEntityUncraftingdropper.inventoryPos = posCheck;
-        }
-    }
 
     
 	@Override
@@ -265,6 +269,8 @@ public class BlockUncraftingdropper extends BlockTileEntity<TileEntityUncrafting
 	public void onBlockPlaced(World world, BlockPos pos, ItemStack itemStackUsed) {		
 		updateInventoryPosInFrontPosition(world, pos);			
 	}
+
+
 
 
     

@@ -423,7 +423,7 @@ public class TileEntityUncraftingdropper extends TileEntity implements  ITickabl
 	        IBlockState state = world.getBlockState(pos);
 	        Block bloque = state.getBlock();
 	        if (bloque instanceof BlockUncraftingdropper) {
-	            ((BlockUncraftingdropper) bloque).updateInventoryPosInFrontPosition(world, pos);	            
+	            ((BlockUncraftingdropper) bloque).updateInventoryPosInFrontPosition(world, pos,state);	            
 	        }
 	    
 	}

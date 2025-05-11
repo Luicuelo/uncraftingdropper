@@ -159,11 +159,14 @@ public abstract  class BlockTileEntity<T extends TileEntity> extends Block {
 
     protected abstract void redstoneUpdate(World world, BlockPos pos, IBlockState state, boolean powered);
     
+    protected abstract void onNeighborChange(World world, BlockPos pos, IBlockState state, Block blockIn, BlockPos fromPos);
+    
     @SuppressWarnings("deprecation")
 	@Override
     public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos) {
     	super.neighborChanged(state, worldIn, pos, blockIn, fromPos);
         redstoneUpdate(worldIn, pos, state, isPowered(worldIn, pos));
+        onNeighborChange(worldIn, pos, state, blockIn, fromPos);
     }
 
  
