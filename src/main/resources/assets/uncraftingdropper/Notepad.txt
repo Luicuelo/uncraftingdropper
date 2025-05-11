@@ -1,0 +1,15 @@
+creditos
+jglrxavpok's Uncrafting Table
+Uncrafting Dropper
+The Uncrafting Dropper is a utility block that allows players to reverse-craft items into their components. Simply place an item in the dropper, and it will attempt to break it down into its crafting ingredients.
+
+Features:
+
+	•  Reverse Crafting: Automatically disassembles items into their crafting components.
+	•  Supports Damaged Items: Handles items with durability, ensuring proper behavior for tools and weapons.
+	•  Configurable Behavior: Includes options to control whether items are consumed during the process.
+	•  Redstone Integration: Can be activated with redstone signals for automation.
+	•  Item Dispensing: Outputs components into the world or connected hoppers.
+	•  Reversibility Check: Notifies players if an item is reversible or not.
+
+This mod is perfect for players who want to recover resources from crafted items or automate resource management in their builds.
