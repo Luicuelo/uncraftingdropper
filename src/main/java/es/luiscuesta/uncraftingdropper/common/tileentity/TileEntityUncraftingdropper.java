@@ -1,6 +1,5 @@
 package es.luiscuesta.uncraftingdropper.common.tileentity;
 
-import java.util.Iterator;
 import java.util.List;
 
 import javax.annotation.Nonnull;
@@ -54,18 +53,9 @@ public class TileEntityUncraftingdropper extends TileEntity implements  ITickabl
 		}
 		
 		public  boolean currentComponentsIfEmpty() {
-			if(currentComponents == null) return true; //if null, return true 			
-			if (TTConfig.comsumeItem) return currentComponents.isEmpty();
-					//if all 0, will split nothing to the world, and then consume the item
+			if(currentComponents == null|| currentComponents.isEmpty()) return true; //if null, return true 			
+			return false; //if not null, return false
 			
-			Iterator<RecipeComponent> iterator = currentComponents.iterator();
-			while (iterator.hasNext()) {
-			    RecipeComponent component = iterator.next();
-			    if (component.getQuantity() <= 0) {
-			        iterator.remove();
-			    }
-			}
-			return currentComponents.isEmpty();
 		}
 	
 		public void sendUpdates() {
@@ -250,15 +240,12 @@ public class TileEntityUncraftingdropper extends TileEntity implements  ITickabl
 		}
 				
 	
-
-		
 		private void logMessage (String msg) {
 			 //EntityPlayer player = world.getClosestPlayer(pos.getX(), pos.getY(), pos.getZ(), 10, false);
 			 //if  (player != null)  player.sendMessage(new TextComponentString(msg));
 			System.out.println(msg);
 		}
-		
-
+	
 		protected void onContentsChanged() {
 			
 			if(getWorld() == null || getWorld().isRemote) return; // Check if the world is not null and not remote			

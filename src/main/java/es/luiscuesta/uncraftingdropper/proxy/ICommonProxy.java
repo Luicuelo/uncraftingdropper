@@ -1,9 +1,12 @@
 package es.luiscuesta.uncraftingdropper.proxy;
 
+import java.nio.file.Path;
+
 import es.luiscuesta.uncraftingdropper.Uncraftingdropper;
 import es.luiscuesta.uncraftingdropper.common.blocks.BlockTileEntity;
 import es.luiscuesta.uncraftingdropper.common.blocks.ModBlocks;
 import es.luiscuesta.uncraftingdropper.common.recipes.ModRecipes;
+import es.luiscuesta.uncraftingdropper.common.tileentity.UncraftHelper;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -27,6 +30,8 @@ public abstract class ICommonProxy{
 		//ModItems.init();
 		//ModDimensions.init();		
 		//ModSimpleNetworkChannel.registerMessages();
+	    Path configDir = e.getModConfigurationDirectory().toPath();
+		UncraftHelper.initializeRecipesFile(configDir);
 	}
 	
 	public abstract void init(FMLInitializationEvent e);		

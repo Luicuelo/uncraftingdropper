@@ -13,9 +13,9 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 public class TTConfig {
 	
 	
-    @Config.Comment( "Comsumes damageable item when nothing is returned")
-    @Config.Name("Consume Damageable Item")
-    @Config.LangKey("uncraftingdropper.config.comsumeDamageableItem")
+    @Config.Comment( "Comsumes damaged item when nothing is returned, but can get a book if echanted")
+    @Config.Name("Consume Damaged Item")
+    @Config.LangKey("uncraftingdropper.config.comsumeDamagedItem")
     // if true, the item will be consumed when nothing is returned cos is very damaged	
     public static boolean comsumeItem = false;
     

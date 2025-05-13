@@ -1,0 +1,10 @@
+{ Recipes: [ 
+{ inputItem: {id: "minecraft:saddle", Count: 1b}, outputItems: [ {id: "minecraft:leather", Count: 3b}, {id: "minecraft:iron_ingot", Count: 1b} ] }, 
+{ inputItem: {id: "minecraft:chainmail_chestplate", Count: 1b, Damage: 0s}, outputItems: [ {id: "minecraft:iron_nugget", Count: 3b}, {id: "minecraft:iron_ingot", Count: 5b} ] }, 
+{ inputItem: {id: "minecraft:chainmail_helmet", Count: 1b, Damage: 0s}, outputItems: [ {id: "minecraft:iron_nugget", Count: 8b}, {id: "minecraft:iron_ingot", Count: 2b} ] }, 
+{ inputItem: {id: "minecraft:chainmail_leggings", Count: 1b, Damage: 0s}, outputItems: [ {id: "minecraft:iron_nugget", Count: 1b}, {id: "minecraft:iron_ingot", Count: 4b} ] }, 
+{ inputItem: {id: "minecraft:chainmail_boots", Count: 1b, Damage: 0s}, outputItems: [ {id: "minecraft:iron_nugget", Count: 6b}, {id: "minecraft:iron_ingot", Count: 2b} ] }, 
+{ inputItem: {id: "minecraft:iron_horse_armor", Count: 1b}, outputItems: [ {id: "minecraft:iron_nugget", Count: 1b}, {id: "minecraft:iron_ingot", Count: 4b}, {id: "minecraft:leather", Count: 2b} ] }, 
+{ inputItem: {id: "minecraft:golden_horse_armor", Count: 1b}, outputItems: [ {id: "minecraft:gold_nugget", Count: 1b}, {id: "minecraft:gold_ingot", Count: 4b}, {id: "minecraft:leather", Count: 2b} ] }, 
+{ inputItem: {id: "minecraft:diamond_horse_armor", Count: 1b}, outputItems: [ {id: "minecraft:diamond", Count: 3b}, {id: "minecraft:leather", Count: 2b} ] } 
+] }
