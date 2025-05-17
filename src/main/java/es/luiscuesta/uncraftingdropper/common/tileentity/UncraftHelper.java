@@ -7,14 +7,12 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.item.ItemStack;
 
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
 
 import net.minecraft.item.crafting.CraftingManager;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.Ingredient;
-import net.minecraft.item.crafting.ShapedRecipes;
 import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
@@ -28,7 +26,6 @@ import es.luiscuesta.uncraftingdropper.common.config.TTConfig;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -41,104 +38,108 @@ import net.minecraftforge.common.util.Constants;
 public class UncraftHelper {
 
 
-    public static class RecipeComponent {
-        private final ItemStack itemStack;
-        private int quantity;
 
-        
-        public RecipeComponent() {
-        
-        	this.itemStack =ItemStack.EMPTY;
-        	this.quantity=0;
-        }
-        public RecipeComponent(ItemStack itemStack, int quantity) {
-            this.itemStack = itemStack;
-            this.quantity = quantity;
-        }
-
-        public ItemStack getItemStack() {
-            return itemStack;
-        }
-
-        public int getQuantity() {
-            return quantity;
-        }
-        
-        public void setQuantity(int quantity) {
-			this.quantity = quantity;
-		}
-    }
 	
     //recipes for output
-	private static final Map<String,  List<RecipeComponent>>recipeCache = new HashMap<>();
+	private static final Map<String,  List<ItemStack>>recipeCache = new HashMap<>();
 	// A cache for simple decompiling recipes
-	private static final Map<String,  Map.Entry<ItemStack,Integer>>descompCache = new HashMap<>();
+	private static final List<String>descompCache = new ArrayList<>();
 	//private static final Map<String, ItemStack> descompToOriginalCache=new HashMap<>();
 	
+	//list of custom recipes keys
+	private static final List<ItemStack> customRecipesKeys = new ArrayList<>();
 	
-	
-	private static String getRecipeCacheKey(ItemStack stack) {
-	    return stack.getItem().isDamageable() 
-	        ? stack.getItem().getRegistryName().toString() 
-	        : stack.getItem().getRegistryName() + "@" + stack.getMetadata();
+	public static final List<ItemStack> getCustomRecipesKeys(){
+		return customRecipesKeys;
 	}
 	
+	public static List<ItemStack>  getComponentsCopyFromCache(String key) {    	
+		//create a copy of the list from the recipeCache
+		List<ItemStack> componentsList =recipeCache.get(key);
+		List<ItemStack> components = new ArrayList<>();
+		if (componentsList==null) return components;
+		
+		for (ItemStack itemStack : componentsList) {
+			if (itemStack==null||itemStack.isEmpty()) continue;
+			components.add(itemStack.copy());
+		}
+		return components;			
+	}
+   
+    public static List<ItemStack>  getComponentsFromCache(String key) {    	
+    		return recipeCache.get(key);
+    }
+    
+	public static ItemStack getStackFromRecipeCacheKey(String key) {
+		//get 	NTB TagCompound from String representation
+		NBTTagCompound nbtTag = new NBTTagCompound();
+		try {
+			nbtTag = JsonToNBT.getTagFromJson(key);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		// Create a new ItemStack from the NBT data
+		ItemStack itemStack = new ItemStack(nbtTag);
+		return itemStack;
+	}
 	
-	/*
-	private static ItemStack getStackFromRecipeCacheKey(String key) {
-	    // Split the key into the registry name and metadata
-	    String[] parts = key.split("@");
-	    if (parts.length != 2) {
-	        throw new IllegalArgumentException("Invalid key format: " + key);
-	    }
+    private static ItemStack setQuantity(ItemStack stack, int quantity) {
+    	stack.setCount(quantity);
+        return stack;
+    }
+	
+	public static String getKey(ItemStack stack) {
+		//{id:"minecraft:chainmail_leggings",Count:1b,Damage:0s}
+		
+		NBTTagCompound nbtTag = new NBTTagCompound();
+		stack.writeToNBT(nbtTag);
+		// set count to 1 and damage to 0
+		if (nbtTag.hasKey("Count")) {
+			nbtTag.setInteger("Count", 1);
+		}
+		if (nbtTag.hasKey("Damage")) {
+			nbtTag.setInteger("Damage", 0);
+		}
+		return nbtTag.toString();
+	}
+	
 
-	    String registryName = parts[0];
-	    int metadata;
-	    try {
-	        metadata = Integer.parseInt(parts[1]);
-	    } catch (NumberFormatException e) {
-	        throw new IllegalArgumentException("Invalid metadata in key: " + key, e);
-	    }
-
-	    // Get the item from the registry name
-	    Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(registryName));
-	    if (item == null) {
-	        throw new IllegalArgumentException("Item not found for registry name: " + registryName);
-	    }
-
-	    // Create and return the ItemStack
-	    return new ItemStack(item, 1, metadata);
-	}*/
 	
 
 	
 	//gets a RecipeCacheKey and true if the stack can be used to recreate the original stack
-	private static boolean isReversible(ItemStack stack) {
-		
-		String key = getRecipeCacheKey(stack);
-		Entry<ItemStack, Integer> dcomponent = descompCache.get(key);
-		return (dcomponent != null);
+	private static boolean isReversible(ItemStack stack) {		
+		return (descompCache.contains(getKey(stack)));
 	}
+	
+   public static ItemStack getSmallerComponentCopy (ItemStack stack) {
+    	String key=getKey(stack);
+    	if  (descompCache.contains(key)){
+    		return recipeCache.get(key).get(0).copy();
+    	}
+    	//if not exists, return null
+    	return null;
+    }
 	
 	
 	//Sort a recipe cache entry, reversible first
-	private static List<RecipeComponent> sortComponents(List<RecipeComponent> components) {
+	private static List<ItemStack> sortComponents(List<ItemStack> components) {
 		
 		for (int i = 0; i < components.size(); i++) {
-			RecipeComponent component = components.get(i);
-			ItemStack itemStack = component.getItemStack();
+		
+			ItemStack itemStack = components.get(i);
 			if (isReversible(itemStack)) continue;
 			//skip all reversible components
 			
 			//here is not reversible, so will find the first reversible as swap
 			int j;
 			for (j = i + 1; j < components.size(); j++) {
-				RecipeComponent nextComponent = components.get(j);
-				ItemStack nextItemStack = nextComponent.getItemStack();
-				if (isReversible(nextItemStack)) {
-					// Swap the two components					
-					components.set(i, nextComponent);
-					components.set(j, component);				
+
+				if (isReversible(components.get(j))) {
+					// Swap the two components
+					ItemStack tempItemStack=components.get(i);
+					components.set(i, components.get(j));
+					components.set(j, tempItemStack);				
 					break;
 				}
 			}				
@@ -159,68 +160,55 @@ public class UncraftHelper {
             ItemStack output = recipe.getRecipeOutput();
             if (output != null && !output.isEmpty()) {
             	
-            	if(output.getCount()==1) {
-            		String key = getRecipeCacheKey(output);
+            	int outputCount=output.getCount();
+            	if(outputCount==1) {
+            		String key = getKey(output);
             		//only add if not exists
             		if (!recipeCache.containsKey(key)) {
 						//Uncraftingdropper.logger.info(output+":Added to recipeCache: " + key + " -> " + recipe);
-            			List<RecipeComponent> components = computeComponents(recipe);
+            			List<ItemStack> components = computeComponents(recipe);
 						recipeCache.put(key, components);
 					}            		
-            	}
-            	
-            	if(output.getCount()>1 && recipe.getIngredients().size()==1 ) {
-            		Ingredient ingredient = recipe.getIngredients().get(0);
-            		ItemStack ingredientStacks[] = ingredient.getMatchingStacks();
-            		if (ingredientStacks.length == 0) {
-						continue; // Skip if no matching stacks
-					}
-            		
-            		ItemStack ingredientStack =ingredientStacks[0];
-					String key = getRecipeCacheKey(ingredientStack);           
-					int count = output.getCount();
-					output.setCount(1); // Set the output count to 1 for the cache    
-					if (!descompCache.containsKey(key)) {
-            			descompCache.put(key, new AbstractMap.SimpleEntry<>(output, count));
-            			//descompToOriginalCache.put(getRecipeCacheKey(output), ingredientStack);
-            			//Uncraftingdropper.logger.info(output+":Added to descompCache: " + key + " -> " + descompCache.get(key));
-            		}
-            	}
+            	}            	
             }     
         }
         
+        for (IRecipe recipe : CraftingManager.REGISTRY) {        
+            ItemStack output = recipe.getRecipeOutput();
+            if (output != null && !output.isEmpty()) {
+            	
+            	int outputCount=output.getCount();
+		    	if(outputCount>1 && recipe.getIngredients().size()==1 ) {
+		    		Ingredient ingredient = recipe.getIngredients().get(0);
+		    		ItemStack ingredientStacks[] = ingredient.getMatchingStacks();
+		    		if (ingredientStacks.length == 0) {
+						continue; // Skip if no matching stacks
+					}		    		
+		    		ItemStack bigger =ingredientStacks[0];		    				    		
+					String key = getKey(bigger);          
+					
+					//check if bigger decomposition in  recipeCachematch outputcount					
+					if (recipeCache.containsKey(key) && recipeCache.get(key).get(0).getCount() == outputCount
+							&& !descompCache.contains(key)) {
+
+		    			descompCache.add(key);
+		    			//Uncraftingdropper.logger.info(output+":Added to descompCache: " + key + " -> " + descompCache.get(key));
+		    		}
+		    	}
+            }     
+        } 
+        
         loadCustomRecipes();
         
-        Iterator<Map.Entry<String, Map.Entry<ItemStack, Integer>>> iterator = descompCache.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<String, Map.Entry<ItemStack, Integer>> descompCacheEntry = iterator.next();
-            String stackKey = descompCacheEntry.getKey();
-            List<RecipeComponent> recipeCacheList = recipeCache.get(stackKey);
-            if (recipeCacheList == null ||  recipeCacheList.isEmpty()) {
-                //Uncraftingdropper.logger.info("Removing from descompCache: " + stackKey + " -> " + descompCacheEntry.getValue().getKey());
-                iterator.remove(); // Safely remove the entry
-            } else {
-            	
-            	List<RecipeComponent> originalComponents = getComponentsFromCache(stackKey);
-            	          	
-                int componentQuantity = originalComponents.get(0).quantity;
-
-                if (componentQuantity != descompCacheEntry.getValue().getValue()) {
-                   // Uncraftingdropper.logger.info("Removing from descompCache: " + stackKey + " -> " + descompCacheEntry.getValue().getKey());
-                    iterator.remove(); // Safely remove the entry
-                    //descompToOriginalCache.remove(getRecipeCacheKey(originalComponents.get(0).getItemStack()));
-                }
-            }
-        }         
-        
         // sort all getRecipeCacheKeys using sortComponents            
-        for (Entry<String, List<RecipeComponent>> entry : recipeCache.entrySet()) {
+        for (Entry<String, List<ItemStack>> entry : recipeCache.entrySet()) {
 			String key = entry.getKey();
-			List<RecipeComponent> components = entry.getValue();
+			List<ItemStack> components = entry.getValue();
 			// Sort the components
-			List<RecipeComponent> sortedComponents = sortComponents(components);
+			//if (key.equals("{id:\"minecraft:chainmail_leggings\",Count:1b,Damage:0s}")) {
+			List<ItemStack> sortedComponents = sortComponents(components);
 			// Update the cache with the sorted components
-			recipeCache.put(key, sortedComponents);
+			recipeCache.put(key, sortedComponents);			
 		}
     }
     
@@ -228,6 +216,7 @@ public class UncraftHelper {
     public static void loadCustomRecipes() {
     	
         //get ConfigDir
+    	
         Path configDir = Minecraft.getMinecraft().mcDataDir.toPath().resolve("config");               
      
         Path filePath = configDir.resolve("uncraftingdropper/recipes.txt");
@@ -251,7 +240,7 @@ public class UncraftHelper {
                     // Parse the input item
                     NBTTagCompound inputTag = recipeTag.getCompoundTag("inputItem");
                     ItemStack inputStack = new ItemStack(inputTag);
-                    String key = UncraftHelper.getRecipeCacheKey(inputStack);
+                    String key = UncraftHelper.getKey(inputStack);
                     
                     // if exists, skip
                     if (recipeCache.containsKey(key)) {
@@ -261,21 +250,20 @@ public class UncraftHelper {
 
                     // Parse the output items
                     NBTTagList outputList = recipeTag.getTagList("outputItems", Constants.NBT.TAG_COMPOUND);
-                    List<UncraftHelper.RecipeComponent> components = new ArrayList<>();
+                    List<ItemStack> components = new ArrayList<>();
 
                     for (NBTBase outputBase : outputList) {
                         if (outputBase instanceof NBTTagCompound) {
                             NBTTagCompound outputTag = (NBTTagCompound) outputBase;
                             ItemStack outputStack = new ItemStack(outputTag);
-                            int count = outputStack.getCount();
-                            outputStack.setCount(1); // Set the output count to 1 for the cache
-                            components.add(new UncraftHelper.RecipeComponent(outputStack, count));
+                                         
+                            components.add(outputStack);
                         }
                     }
 
                     // Add the recipe to the cache
-                  
-                    UncraftHelper.recipeCache.put(key, components);
+                    customRecipesKeys.add(inputStack);
+                    recipeCache.put(key, components);
                     System.out.println("Added custom recipe: " + key);
                 }
             }
@@ -286,27 +274,6 @@ public class UncraftHelper {
         }
     }
     
-    
-    
-    public static RecipeComponent getSmallerComponent(ItemStack stack) {
-    	Map.Entry<ItemStack, Integer> mapEntry  = descompCache.get(getRecipeCacheKey(stack));
-    	if(mapEntry!=null) {    		
-    		return new RecipeComponent(mapEntry.getKey(),mapEntry.getValue());    		
-    	}
-    	return null;
-    	
-    }
-    
-    /*
-    public static RecipeComponent getBiggerStack(ItemStack stack) {
-       	
-       	String biggerKey=getRecipeCacheKey(descompToOriginalCache.get(getRecipeCacheKey(stack)));
-       	if (biggerKey!=null && !biggerKey.isEmpty()) {
-       		Map.Entry<ItemStack, Integer> mapEntry  = descompCache.get(biggerKey);
-       		return new RecipeComponent(getStackFromRecipeCacheKey(biggerKey),mapEntry.getValue());
-       	}
-       	return null;
-    }*/
     
     /**
      * Extracts enchanted books from an enchanted item.
@@ -337,16 +304,28 @@ public class UncraftHelper {
     }
     
     
-    public static List<RecipeComponent> computeComponentsWithDamageAndProbability(ItemStack stack) {
+    /**
+     * Computes components for uncrafting considering item damage and probability.
+     * Items with damage > 25% have reduced probability of returning components.
+     *
+     * @param stack The ItemStack to compute components for
+     * @return List of ItemStacks representing the components with adjusted damage and quantities
+     */
+    public static List<ItemStack> computeComponentsWithDamageAndProbability(ItemStack stack) {
     	
-    	List<RecipeComponent> adjustedComponents=new ArrayList<>();
+    	List<ItemStack> adjustedComponents=new ArrayList<>();
         // Check if the stack is valid
         if (stack == null || stack.isEmpty()) {
         	return adjustedComponents;
         }
+                        
+        if (isReversible(stack)) {//is reversible, no reduction calulated
+        	adjustedComponents.add(getSmallerComponentCopy(stack));
+        	return adjustedComponents;        	
+        }
 
         // Get the recipe cache key for the stack
-        String keyStack = getRecipeCacheKey(stack);
+        String keyStack = getKey(stack);
         
         // Get the percentage of reduction from the damage of the stack
         int damage = stack.getItemDamage();
@@ -362,57 +341,52 @@ public class UncraftHelper {
        
         float probabilityReduction = (1.0f -(float) (((float) TTConfig.probabilityReduction)* Math.random() / 100.0f))*fixedReduction; 
                // Compute the components using the recipe cache key
-        List<RecipeComponent> components = getComponentsFromCache(keyStack);
-
-        boolean notEmpty = false;
+        List<ItemStack> components = getComponentsCopyFromCache(keyStack);
+        boolean isEmpty=true;
+       
         // Adjust each component's quantity based on the reductions
         for (int i = 0; i < components.size(); i++) {
         	
-            RecipeComponent component = components.get(i);
-            ItemStack itemStack = component.getItemStack();            
-            RecipeComponent smaller=getSmallerComponent(itemStack);
-            boolean hasSmaller=(smaller!=null);
-            int quantity = component.getQuantity();
             
-            if (hasSmaller) { 
-            	ItemStack smallerItemStack = smaller.getItemStack();
-            	int smallerQuantity=smaller.getQuantity();
+            ItemStack itemStack = components.get(i);    
+            // if empty continue
+            if (itemStack.isEmpty()) continue;          
+            int quantity = itemStack.getCount();
+            
+            if (isReversible(itemStack)) { 
+          
+            	ItemStack smallerItemStack  =getSmallerComponentCopy(itemStack);;
+            	int smallerQuantity=smallerItemStack.getCount();
             	quantity=quantity*smallerQuantity;
             	
             	//search into the i+1 to end of the list for smaller components, if found add the quantiy and set the quantity to 0
             	for (int j = i + 1; j < components.size(); j++) {
-					RecipeComponent nextComponent = components.get(j);
-					ItemStack nextItemStack = nextComponent.getItemStack();
+            
+					ItemStack nextItemStack = components.get(j);
 					if (nextItemStack.isItemEqual(smallerItemStack)) {
-						quantity +=  nextComponent.getQuantity();
+						quantity +=  nextItemStack.getCount();
 						// set i component quantity to 0
-						components.get(j).setQuantity(0);
+						components.get(j).setCount(0);
 					}
 				}
-            	
-            	
+           	            	
             	// 	Calculate the final quantity after applying reductions
             	int finalQuantity = (int) (quantity * probabilityReduction);
-
             	int integerPart = finalQuantity / smallerQuantity;
             	int decimalPart = finalQuantity % smallerQuantity;
-            	// 	Update the component's quantity
-                // Add the decimal part as a separate component if necessary
+
+            	ItemStack recipeComponent= setQuantity(itemStack,integerPart);         
             	
-            	//(TTConfig.comsumeItem)
-            	
-            	RecipeComponent recipeComponent=new RecipeComponent(itemStack,integerPart);         
-            	
-            	if(integerPart>0) {
-					notEmpty=true;
+            	if(integerPart>0) {				
+            		isEmpty=false;
 					adjustedComponents.add (recipeComponent);
             	}else if(TTConfig.comsumeItem) { // add even is 0					   	
 					adjustedComponents.add (recipeComponent);
             	}
             	
-            	RecipeComponent decimalComponent = new RecipeComponent(smaller.getItemStack(), decimalPart);   
+            	ItemStack decimalComponent = setQuantity(smallerItemStack, decimalPart);   
                 if (decimalPart > 0) {
-                	notEmpty=true;
+                	isEmpty=false;
                 	adjustedComponents.add (decimalComponent);
             	}else if(TTConfig.comsumeItem) { // add even is 0					   	
 					adjustedComponents.add (decimalComponent);
@@ -421,20 +395,22 @@ public class UncraftHelper {
             }else
             {
             	int finalQuantity = (int) (quantity * probabilityReduction);
-            	RecipeComponent recipeComponent=new RecipeComponent(itemStack,finalQuantity);   
-            	 if (finalQuantity > 0) {
-            		 notEmpty=true;                	
+            	ItemStack recipeComponent=setQuantity(itemStack,finalQuantity);   
+            	 if (finalQuantity > 0) {   
+            		 isEmpty=false;
             		 adjustedComponents.add (recipeComponent);
             	 }else if(TTConfig.comsumeItem) { // add even is 0					   	
  					adjustedComponents.add (recipeComponent);
              	}
-            }
-                        
+            }                        
         }
         
-        if (!notEmpty&&!TTConfig.comsumeItem) {
+        
+        
+        if (isEmpty) {
 			// If the adjusted components are empty, return an empty list
-			return adjustedComponents;
+			if (!TTConfig.comsumeItem) adjustedComponents.clear();
+			return adjustedComponents;		
 		}
         
         //if the stsck is enchanted, we need to extract the books gets a list of enchanted books
@@ -449,7 +425,7 @@ public class UncraftHelper {
 				ItemStack enchantedBook = enchantedBooks.get(0);
 				// Add the enchanted book to the adjusted components
 				{ int randomValue = (int) (Math.random() * 100);
-				  if (randomValue < bookProbability) adjustedComponents.add(new RecipeComponent(enchantedBook, 1));
+				  if (randomValue < bookProbability) adjustedComponents.add( setQuantity(enchantedBook, 1));
 				}
 			} else if (TTConfig.enchantMode==2) {
 				// Get a random enchanted book
@@ -458,13 +434,13 @@ public class UncraftHelper {
 				// Add the enchanted book to the adjusted components
 				{
 				int randomValue = (int) (Math.random() * 100);
-				if (randomValue < bookProbability) adjustedComponents.add(new RecipeComponent(enchantedBook, 1));
+				if (randomValue < bookProbability) adjustedComponents.add( setQuantity(enchantedBook, 1));
 				}
 			} else if (TTConfig.enchantMode==3) {
 				// Add all enchanted books to the adjusted components
 				for (ItemStack enchantedBook : enchantedBooks) {
 					 int randomValue = (int) (Math.random() * 100);
-					 if (randomValue < bookProbability) adjustedComponents.add(new RecipeComponent(enchantedBook, 1));
+					 if (randomValue < bookProbability) adjustedComponents.add( setQuantity(enchantedBook, 1));
 				}
 			}        	
 		}
@@ -474,81 +450,57 @@ public class UncraftHelper {
 
     
 
-    
-    public static List<RecipeComponent> computeComponents(IRecipe recipe) {
+    /**
+     * Computes the list of components required for a given recipe.
+     * Handles ingredient deduplication and quantity aggregation.
+     * 
+     * @param recipe The recipe to analyze
+     * @return List of ItemStacks representing the required components
+     */
+    public static List<ItemStack> computeComponents(IRecipe recipe) {
        
-    	List<RecipeComponent> components = new ArrayList<>();
- 
-
-    
+    	List<ItemStack> components = new ArrayList<>();
         if (recipe == null || recipe.getIngredients() == null || recipe.getIngredients().isEmpty()) {
             return components; // Return an empty list if no recipe is found
         }
         
-        //if we get more than one result, we need to divide the quantity of each component by the result count
-        int resultCount=recipe.getRecipeOutput().getCount();
-       
-        // Check if the recipe is a shaped recipe
-        // Create a temporary list to store components
- 
-            if (recipe instanceof ShapedRecipes) {
-                ShapedRecipes shapedRecipe = (ShapedRecipes) recipe;
-                Map<String,Map.Entry<ItemStack, Integer>> ingredientCounts = new HashMap<>();
-
-                for (Ingredient ingredient : shapedRecipe.getIngredients()) {
-                    ItemStack[] matchingStacks = ingredient.getMatchingStacks();
-                    if (matchingStacks != null && matchingStacks.length > 0) {
-                        ItemStack ingredientStack = matchingStacks[0].copy();
-                        //if key dont exists, create it, else , sum count
-                    String key = getRecipeCacheKey(ingredientStack);                        
-                    if (ingredientCounts.containsKey(key)) {
-						ingredientCounts.get(key).setValue(ingredientCounts.get(key).getValue() + ingredientStack.getCount());
-					} else {
-						ingredientCounts.put(getRecipeCacheKey(ingredientStack), new AbstractMap.SimpleEntry<>(ingredientStack, ingredientStack.getCount()));
-					}
-                                          
-                }
-            }
-
-            for (Map.Entry<String,Map.Entry<ItemStack,Integer>> entry : ingredientCounts.entrySet()) {           
-            	components.add(new RecipeComponent(entry.getValue().getKey(), entry.getValue().getValue()/resultCount));                	
-            }
-        } else {
-            for (Ingredient ingredient : recipe.getIngredients()) {
-                ItemStack[] matchingStacks = ingredient.getMatchingStacks();
-                if (matchingStacks != null && matchingStacks.length > 0) {
-                	                    	
-                    ItemStack ingredientStack = matchingStacks[0].copy();
-                    int quantity = ingredientStack.getCount(); // Use the actual quantity
-                    ingredientStack.setCount(1); // Set to 1 for the component
-                    components.add(new RecipeComponent(ingredientStack, quantity/resultCount));                        
-                }
+        Map<String,ItemStack> ingredientCounts = new HashMap<>();
+        
+        for (Ingredient ingredient : recipe.getIngredients()) {
+            ItemStack[] matchingStacks = ingredient.getMatchingStacks();
+            
+            
+            if (matchingStacks != null && matchingStacks.length > 0) {
+                ItemStack ingredientStack = matchingStacks[0].copy();
+                //if key dont exists, create it, else , sum count
+                String key = getKey(ingredientStack);                        
+                int stackCount=ingredientStack.getCount();
+            	
+                if (ingredientCounts.containsKey(key)) {                
+                	ItemStack previousStack= ingredientCounts.get(key);
+                	previousStack.setCount(previousStack.getCount() + stackCount);                    	
+					
+				} else {					
+					ingredientCounts.put(key, ingredientStack);						
+				}                                          
             }
         }
-
-
+        //return components from ingredientCounts gettin the values of ingredientCounts as a list
+        components.addAll(ingredientCounts.values());             
         return components;
     }
 
 
     
-    private static List<RecipeComponent>  getComponentsFromCache(ItemStack stack) {
-		String key = getRecipeCacheKey(stack);
-		return recipeCache.get(key);
-	}
-    
-    private static List<RecipeComponent>  getComponentsFromCache(String key) {
-		return recipeCache.get(key);
-	}
-   
+
 
     
-    public static void debugPrintIngredients(EntityPlayer player,ItemStack stack,  List<UncraftHelper.RecipeComponent> components) {
+    public static void debugPrintIngredients(EntityPlayer player,ItemStack stack,  List<ItemStack> components) {
    
         player.sendMessage(new TextComponentString("Ingredients for: " + stack.getDisplayName()));
-        for (UncraftHelper.RecipeComponent component : components) {
-            String itemName = component.getItemStack().getDisplayName();
-            int quantity = component.getQuantity();
+        for (ItemStack component : components) {
+            String itemName = component.getDisplayName();
+            int quantity = component.getCount();
             player.sendMessage(new TextComponentString("- " + itemName + "; Quantity: " + quantity));
         }
     }

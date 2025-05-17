@@ -47,6 +47,7 @@ public class BlockUncraftingdropper extends BlockTileEntity<TileEntityUncrafting
        
         //this.setCreativeTab(uncraftingdropper.getTab());
 		resourceLocation= new ResourceLocation(LibMisc.MOD_ID, LibBlockNames.UNCRAFTINGDROPPER);
+		this.setUnlocalizedName("uncraftingdropper");
 		Uncraftingdropper.modRegistry.addBlockForRegistry(this);
 		Uncraftingdropper.modRegistry.addBlockItemForRegistry(this);
 		

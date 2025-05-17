@@ -7,10 +7,10 @@ import javax.annotation.Nullable;
 
 import es.luiscuesta.uncraftingdropper.common.blocks.BlockUncraftingdropper;
 import es.luiscuesta.uncraftingdropper.common.config.TTConfig;
-import es.luiscuesta.uncraftingdropper.common.tileentity.UncraftHelper.RecipeComponent;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.item.EntityItem;
+import net.minecraft.init.SoundEvents;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -19,6 +19,7 @@ import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ITickable;
+import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.Capability;
@@ -32,7 +33,7 @@ public class TileEntityUncraftingdropper extends TileEntity implements  ITickabl
 
 
 
-	 	private List<UncraftHelper.RecipeComponent> currentComponents=new java.util.ArrayList<UncraftHelper.RecipeComponent>(); //empty list	 	 	 	 	
+	 	private List<ItemStack> currentComponents=new java.util.ArrayList<ItemStack>(); //empty list	 	 	 	 	
 		private MyItemStackHandler inventory = new MyItemStackHandler();
 		public BlockPos inventoryPos = null;
 		private int lastComparatorSignal = 0;
@@ -90,9 +91,9 @@ public class TileEntityUncraftingdropper extends TileEntity implements  ITickabl
 	        if (currentComponents != null) {
 	            for (int i = 0; i < currentComponents.size(); i++) {
 	                NBTTagCompound componentTag = new NBTTagCompound();
-	                RecipeComponent component = currentComponents.get(i);
-	                componentTag.setTag("item", component.getItemStack().serializeNBT());
-	                componentTag.setInteger("quantity", component.getQuantity());
+	                ItemStack component = currentComponents.get(i);
+	                componentTag.setTag("item", component.serializeNBT());
+	                componentTag.setInteger("quantity", component.getCount());
 	                nbt.setTag("component" + i, componentTag);
 	            }
 	        }
@@ -102,15 +103,15 @@ public class TileEntityUncraftingdropper extends TileEntity implements  ITickabl
 	    //function to deserialize NBT currentComponents
 	    public void deserializeNBTCurrentComponents(NBTTagCompound nbt) {
 	        if (currentComponents!=null) currentComponents.clear();
-	        else currentComponents= new java.util.ArrayList<UncraftHelper.RecipeComponent>(); //empty list
+	        else currentComponents= new java.util.ArrayList<ItemStack>(); //empty list
 	        for (int i = 0; nbt.hasKey("component" + i); i++) {
 	            NBTTagCompound componentTag = nbt.getCompoundTag("component" + i);
-	            ItemStack itemStack = new ItemStack(componentTag.getCompoundTag("item"));
-	            int quantity = componentTag.getInteger("quantity");
-	            currentComponents.add(new RecipeComponent(itemStack, quantity));
+	            ItemStack itemStack = new ItemStack(componentTag.getCompoundTag("item"));  
+	            currentComponents.add( itemStack);
 	        }
 	    }
 	    
+	
 	    
 	    //decorations for ontli server side
 	    
@@ -165,16 +166,18 @@ public class TileEntityUncraftingdropper extends TileEntity implements  ITickabl
 	    }
 
 
-	    public boolean canRedstoneConnect() {
-	        return false;
-	    }
-	
-	    
-	    @Override //do persisteen
+	    @Override //do persistent
 	    public boolean shouldRefresh(World world, BlockPos pos, IBlockState oldState, IBlockState newState) {
 	        return oldState.getBlock() != newState.getBlock(); // Only refresh if the block type changes
 	    }
 		
+	    
+	    public boolean canRedstoneConnect() {
+	        return true;
+	    }
+	
+	    
+
 	private class MyItemStackHandler implements IItemHandler, IItemHandlerModifiable, INBTSerializable<NBTTagCompound>{
 		
 		private ItemStack internalStack = ItemStack.EMPTY;
@@ -433,12 +436,12 @@ public class TileEntityUncraftingdropper extends TileEntity implements  ITickabl
         
 			if (currentComponents!=null&&currentComponents.size() > 0) {
 				//for each currentComponents must be spawned as entity in the world before break the block
-				for (RecipeComponent component : currentComponents) {
+				for (ItemStack component : currentComponents) {
 					
-					ItemStack itemStack = component.getItemStack();					
-					int quantity = component.getQuantity();
+			
+					int quantity = component.getCount();
 					if (quantity==0) continue;
-					ItemStack itemStackCopy = itemStack.copy();
+					ItemStack itemStackCopy = component.copy();
 					itemStackCopy.setCount(quantity); 
 					worldIn.spawnEntity(new EntityItem(worldIn, pos.getX(), pos.getY(), pos.getZ(), itemStackCopy));					
 				}
@@ -485,11 +488,9 @@ public class TileEntityUncraftingdropper extends TileEntity implements  ITickabl
 			
 		}else {
 	
-			RecipeComponent component = currentComponents.get(0);
-			ItemStack itemStack = component.getItemStack();
+			ItemStack itemStack = currentComponents.get(0);			
 			ItemStack itemStackCopy = itemStack.copy();
-			itemStackCopy.setCount(1); // Set to 1 for the component
-			int quantity = component.getQuantity();
+			int quantity = itemStack.getCount();
 			
 			boolean dispensed = true;
 			//inventory.logMessage("We are going to dispense an item:"+itemStackCopy.getDisplayName());
@@ -499,7 +500,7 @@ public class TileEntityUncraftingdropper extends TileEntity implements  ITickabl
 				//if the item is dispensed, remove one from the list
 				//inventory.logMessage("Item dispensed:"+itemStackCopy.getDisplayName());
 				if(quantity>1) {
-					component.setQuantity(quantity-1);			 			
+					itemStack.shrink(1); // Remove one from the stack	 			
 				}else {
 					currentComponents.remove(0);
 				}
@@ -518,7 +519,28 @@ public class TileEntityUncraftingdropper extends TileEntity implements  ITickabl
 		markDirty();	
 	}
 	
+	/*
+	  protected void playDispenseSound(TileEntityUncraftingdropper source)
+	    {
+	        source.getWorld().playEvent(1000, source.getPos(), 0);
+	    }
+	*/
 	
+	protected void playDispenseSound(TileEntityUncraftingdropper source,float volume) {
+		// Use this:
+		World world = source.getWorld();
+		BlockPos pos = source.getPos();
+		world.playSound(
+		    null, // Player - null for all players
+		    pos.getX(), 
+		    pos.getY(), 
+		    pos.getZ(), 
+		    SoundEvents.BLOCK_DISPENSER_DISPENSE, // Or your custom sound
+		    SoundCategory.BLOCKS,
+		    volume,  // Volume (default is 1.0F, lower = quieter)
+		    0.8F   // Pitch (default is 1.0F, lower = deeper sound)
+		);
+	}
 	public final boolean dispense(TileEntityUncraftingdropper tileEntity, ItemStack stack)
     {
     	    	
@@ -526,7 +548,8 @@ public class TileEntityUncraftingdropper extends TileEntity implements  ITickabl
       	World tileWorld = tileEntity.getWorld(); // Get the world of the TileEntity
     	IBlockState actualState = tileWorld.getBlockState(pos); // Get the actual state at the TileEntity's position
     	
-    	this.playDispenseSound(tileEntity);
+    	
+    	this.playDispenseSound(tileEntity,0.2F);
     	if (inventoryPos==null) {
 	    	EnumFacing enumfacing=actualState.getValue(BlockUncraftingdropper.FACING); // Get the facing direction from the block state    	     	
 	        dispenseStack(tileEntity, stack,enumfacing);
@@ -585,10 +608,7 @@ public class TileEntityUncraftingdropper extends TileEntity implements  ITickabl
         worldIn.spawnEntity(entityitem);
     }
 
-    protected void playDispenseSound(TileEntityUncraftingdropper source)
-    {
-        source.getWorld().playEvent(1000, source.getPos(), 0);
-    }
+  
     
     protected void spawnDispenseParticles(TileEntityUncraftingdropper source, EnumFacing facingIn)
     {

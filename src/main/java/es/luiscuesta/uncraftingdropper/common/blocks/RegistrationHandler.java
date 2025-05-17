@@ -28,8 +28,7 @@ public  class RegistrationHandler {
     public  void registerBlocks(final RegistryEvent.Register<Block> event) {
         final IForgeRegistry<Block> registry = event.getRegistry();
 		for(BlockTileEntity<?> b:blocks) {		
-			b.setRegistryName(b.getResourceLocation());						
-			b.setUnlocalizedName(b.getUnlocalizedName());			
+			b.setRegistryName(b.getResourceLocation());											
 			registry.register(b);
 		}
     }
