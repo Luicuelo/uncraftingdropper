@@ -51,7 +51,14 @@ public  class RegistrationHandler {
 			Block block =(blocks.get(i));
 			if (block instanceof BlockTileEntity) {
 				Class<? extends TileEntity> classTileEntity=((BlockTileEntity<?>)block).getClassTileEntity();
-				GameRegistry.registerTileEntity(classTileEntity, block.getRegistryName().toString());
+				
+				//if not yet register , register TileEntity
+				try {
+					GameRegistry.registerTileEntity(classTileEntity, block.getRegistryName().toString());
+				}catch
+				(IllegalArgumentException e) {
+					//already registered
+				}	
 			}
 				
 		} 

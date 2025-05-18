@@ -47,7 +47,7 @@ public class TileEntityUncraftingdropperRenderer extends TileEntitySpecialRender
 	
 	private void drawItem(double x, double y, double z, ItemStack wrk ) {
 			GlStateManager.pushMatrix();
-		    GlStateManager.color(1.0F, 1.0F, 1.0F,  0.5F); // Set alpha to 0.5 for half transparency
+		    GlStateManager.color(1.0F, 1.0F, 1.0F, 1F);
 			GlStateManager.translate(x+ 0.5F, y+ 0.7F, z+ 0.5F);
 			GlStateManager.scale(0.25F, 0.25F, 0.25F); // Scale down to half size
 		    GlStateManager.rotate(rotation, 0.0F, 1.0F, 0.0F); // Rotate 45º around the Y-axis

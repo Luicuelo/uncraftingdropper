@@ -1,7 +1,6 @@
 package es.luiscuesta.uncraftingdropper.common.blocks;
 
 import es.luiscuesta.uncraftingdropper.Uncraftingdropper;
-import es.luiscuesta.uncraftingdropper.common.libs.LibBlockNames;
 import es.luiscuesta.uncraftingdropper.common.libs.LibMisc;
 import es.luiscuesta.uncraftingdropper.common.tileentity.TileEntityUncraftingdropper;
 
@@ -29,16 +28,17 @@ import net.minecraft.world.World;
 
 
 
-public class BlockUncraftingdropper extends BlockTileEntity<TileEntityUncraftingdropper> {
+public abstract class BlockUncraftingdropper extends BlockTileEntity<TileEntityUncraftingdropper> {
 
     public static final PropertyBool WRK = PropertyBool.create("wrk");
     public static final PropertyBool POWER = PropertyBool.create("power");
     public static final PropertyDirection FACING = PropertyDirection.create("facing", EnumFacing.Plane.HORIZONTAL);
+
     
     public ResourceLocation resourceLocation;
 
-    public BlockUncraftingdropper() {
-        super(LibBlockNames.UNCRAFTINGDROPPER, Material.ROCK, true);
+    public  BlockUncraftingdropper(String Name, Material material) {
+        super(Name, material, true);
         setHardness(3.0F);
         setResistance(8.0f);
         //setDefaultState(this.getBlockState().getBaseState().withProperty(FACING,EnumFacing.NORTH).withProperty(WRK, false).withProperty(POWER, false));
@@ -46,17 +46,21 @@ public class BlockUncraftingdropper extends BlockTileEntity<TileEntityUncrafting
         setTickRandomly(true);
        
         //this.setCreativeTab(uncraftingdropper.getTab());
-		resourceLocation= new ResourceLocation(LibMisc.MOD_ID, LibBlockNames.UNCRAFTINGDROPPER);
-		this.setUnlocalizedName("uncraftingdropper");
+		resourceLocation= new ResourceLocation(LibMisc.MOD_ID, Name);
+		this.setUnlocalizedName( Name);
 		Uncraftingdropper.modRegistry.addBlockForRegistry(this);
 		Uncraftingdropper.modRegistry.addBlockItemForRegistry(this);
-		
+    }
+    
+  
+    public  int  getTier() {
+    	return 1;
     }
     
     @Override
     public BlockRenderLayer getBlockLayer()
     {
-        return BlockRenderLayer.TRANSLUCENT;
+        return BlockRenderLayer.SOLID;
     }
     
     

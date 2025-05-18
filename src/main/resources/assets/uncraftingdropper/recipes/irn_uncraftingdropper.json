@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "SSS",
+    "SXS",
+    "SBS"
+  ],
+  "key": {
+    "S": {
+      "item": "minecraft:iron_ingot"
+    },
+	"B": {
+      "item": "minecraft:iron_block"
+    },	
+    "X": {
+      "item": "uncraftingdropper:uncraftingdropper"
+    }
+  },
+  "result": {
+    "item": "uncraftingdropper:irn_uncraftingdropper",
+    "count": 1
+  }
+}

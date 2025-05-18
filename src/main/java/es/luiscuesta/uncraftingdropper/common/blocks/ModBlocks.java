@@ -7,7 +7,10 @@ import net.minecraftforge.fml.common.registry.GameRegistry;
 
 @GameRegistry.ObjectHolder(LibMisc.MOD_ID)
 public class ModBlocks {
-	public static final BlockUncraftingdropper uncraftingdropper =  new BlockUncraftingdropper();		    
+	public static final BlockUncraftingdropper uncraftingdropper =  new Stn_BlockUncraftingdropper();
+	public static final Irn_BlockUncraftingdropper irn_uncraftingdropper =  new Irn_BlockUncraftingdropper();
+	public static final Gld_BlockUncraftingdropper gld_uncraftingdropper =  new Gld_BlockUncraftingdropper();
+	public static final Dmd_BlockUncraftingdropper dmd_uncraftingdropper =  new Dmd_BlockUncraftingdropper();	
 	public static void init() {//ensures all objects has to be created.
 		
 	}

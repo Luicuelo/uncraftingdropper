@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "SSS",
+    "SXS",
+    "SBS"
+  ],
+  "key": {
+    "S": {
+      "item": "minecraft:gold_ingot"
+    },
+	"B": {
+	  "item": "minecraft:gold_block"
+	},	
+    "X": {
+      "item": "uncraftingdropper:irn_uncraftingdropper"
+    }
+  },
+  "result": {
+    "item": "uncraftingdropper:gld_uncraftingdropper",
+    "count": 1
+  }
+}

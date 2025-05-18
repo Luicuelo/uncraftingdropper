@@ -3,20 +3,20 @@
 	"parent": "block/block",
 	"texture_size": [64, 64],
 	"textures": {
-		"7": "uncraftingdropper:blocks/stn_uncraftingdropper",
-		"particle": "blocks/cobblestone"
+		"7": "uncraftingdropper:blocks/gld_uncraftingdropper",
+		"particle": "blocks/gold_block"
 	},
 	"elements": [
 		{
 			"from": [0, 0, 0],
 			"to": [16, 16, 16],
 			"faces": {
-				"north": {"uv": [0, 0, 4, 4], "texture": "#7", "cullface": "north"},
+				"north": {"uv": [4, 4, 8, 8], "texture": "#7", "cullface": "north"},
 				"east": {"uv": [0, 4, 4, 8], "texture": "#7", "cullface": "east"},
 				"south": {"uv": [12, 4, 16, 8], "texture": "#7", "cullface": "south"},
 				"west": {"uv": [0, 4, 4, 8], "texture": "#7", "cullface": "west"},
-				"up": {"uv": [4, 0, 8, 4], "texture": "#7", "cullface": "up"},
-				"down": {"uv": [8, 0, 12, 4], "texture": "#7", "cullface": "down"}
+				"up": {"uv": [8, 4, 4, 0], "texture": "#7", "cullface": "up"},
+				"down": {"uv": [12, 0, 8, 4], "texture": "#7", "cullface": "down"}
 			}
 		}
 	]
