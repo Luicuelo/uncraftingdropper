@@ -11,7 +11,6 @@ import mezz.jei.api.gui.IRecipeLayout;
 import mezz.jei.api.ingredients.IIngredients;
 import mezz.jei.api.recipe.IRecipeCategory;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
@@ -91,15 +90,10 @@ public class UncraftingdropperCategory implements IRecipeCategory<Uncraftingdrop
 
     public void drawExtras(Minecraft minecraft) {
         // Draw the arrow in the middle of the GUI
-        GlStateManager.enableAlpha();
-        GlStateManager.enableBlend();
         arrow.draw(minecraft, 36, 18); // Adjust these coordinates as needed
-        GlStateManager.disableBlend();
-        GlStateManager.disableAlpha();
     }
 
     public void draw(Minecraft minecraft, int recipeWidth, int recipeHeight, String probability) {
-    
     	Minecraft.getMinecraft().fontRenderer.drawString(
                 probability,
                 44,

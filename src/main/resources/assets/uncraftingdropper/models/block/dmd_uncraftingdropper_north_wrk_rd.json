@@ -1,10 +1,10 @@
 {
 	"credit": "Made with Blockbench",
-	"parent": "block/block",
+	"parent": "block/cube",
 	"texture_size": [64, 64],
 	"textures": {
-		"7": "uncraftingdropper:blocks/stn_uncraftingdropper",
-		"particle": "blocks/cobblestone"
+		"7": "uncraftingdropper:blocks/dmd_uncraftingdropper",
+		"particle": "blocks/diamond_block"
 	},
 	"elements": [
 		{

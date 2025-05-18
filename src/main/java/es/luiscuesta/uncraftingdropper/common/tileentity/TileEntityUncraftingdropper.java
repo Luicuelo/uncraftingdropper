@@ -6,7 +6,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import es.luiscuesta.uncraftingdropper.common.blocks.BlockUncraftingdropper;
-import es.luiscuesta.uncraftingdropper.common.config.TTConfig;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.item.EntityItem;
@@ -37,8 +36,9 @@ public class TileEntityUncraftingdropper extends TileEntity implements  ITickabl
 		private MyItemStackHandler inventory = new MyItemStackHandler();
 		public BlockPos inventoryPos = null;
 		private int lastComparatorSignal = 0;
-		private int ticksUpdate = 20;
+		private int ticksUpdate=20;
 		private int ticksElapsed=0;
+		private int tier;
 		
 		public boolean isStackEmpty() {
 			return inventory.isStackEmpty();
@@ -253,7 +253,7 @@ public class TileEntityUncraftingdropper extends TileEntity implements  ITickabl
 			
 			if(getWorld() == null || getWorld().isRemote) return; // Check if the world is not null and not remote			
 			//logMessage("onContentsChanged------------------:"+getStackName());
-			currentComponents= UncraftHelper.computeComponentsWithDamageAndProbability(getStackCopy());						
+			currentComponents= UncraftHelper.computeComponentsWithDamageAndProbability(getStackCopy(),tier);						
 			sendUpdates();						
 			
 		}
@@ -316,14 +316,10 @@ public class TileEntityUncraftingdropper extends TileEntity implements  ITickabl
 
 	public TileEntityUncraftingdropper() {
 		super();
-		if (TTConfig.uncraftingDropperSpeed>0 && TTConfig.uncraftingDropperSpeed<100) {
-			//if TTConfig.uncraftingDropperSpeed = 1 normal then 20 else 2 fast 10
-			ticksUpdate=20/TTConfig.uncraftingDropperSpeed; // 1 normal 20, 2 fast 10
-			
-		}
 	}
 
 	public boolean isTitleTick() {
+		
 		return((ticksElapsed%ticksUpdate==1));
 	}
 	
@@ -413,7 +409,10 @@ public class TileEntityUncraftingdropper extends TileEntity implements  ITickabl
 	        IBlockState state = world.getBlockState(pos);
 	        Block bloque = state.getBlock();
 	        if (bloque instanceof BlockUncraftingdropper) {
-	            ((BlockUncraftingdropper) bloque).updateInventoryPosInFrontPosition(world, pos,state);	            
+	            ((BlockUncraftingdropper) bloque).updateInventoryPosInFrontPosition(world, pos,state);	    
+	            tier=((BlockUncraftingdropper) bloque).getTier();
+	    		ticksUpdate=UncraftHelper.getProcessingTicks(tier);
+	            //System.out.println("onLoad: "+tier);
 	        }
 	    
 	}

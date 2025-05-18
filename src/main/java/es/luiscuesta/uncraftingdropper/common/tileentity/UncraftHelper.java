@@ -26,6 +26,7 @@ import es.luiscuesta.uncraftingdropper.common.config.TTConfig;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -94,6 +95,10 @@ public class UncraftHelper {
 		NBTTagCompound nbtTag = new NBTTagCompound();
 		stack.writeToNBT(nbtTag);
 		// set count to 1 and damage to 0
+		//remove tag if exists
+		if (nbtTag.hasKey("tag")) {
+			nbtTag.removeTag("tag");
+		}
 		if (nbtTag.hasKey("Count")) {
 			nbtTag.setInteger("Count", 1);
 		}
@@ -166,8 +171,10 @@ public class UncraftHelper {
             		//only add if not exists
             		if (!recipeCache.containsKey(key)) {
 						//Uncraftingdropper.logger.info(output+":Added to recipeCache: " + key + " -> " + recipe);
-            			List<ItemStack> components = computeComponents(recipe);
-						recipeCache.put(key, components);
+            			List<ItemStack> components = computeComponents(recipe);            			
+            			if (components.size()>0&&!getKey(components.get(0)).equals(key))
+            			//do not add if ingredient is equal than output
+            				recipeCache.put(key, components);
 					}            		
             	}            	
             }     
@@ -177,7 +184,7 @@ public class UncraftHelper {
             ItemStack output = recipe.getRecipeOutput();
             if (output != null && !output.isEmpty()) {
             	
-            	int outputCount=output.getCount();
+            	int outputCount=output.getCount();            	      
 		    	if(outputCount>1 && recipe.getIngredients().size()==1 ) {
 		    		Ingredient ingredient = recipe.getIngredients().get(0);
 		    		ItemStack ingredientStacks[] = ingredient.getMatchingStacks();
@@ -187,12 +194,12 @@ public class UncraftHelper {
 		    		ItemStack bigger =ingredientStacks[0];		    				    		
 					String key = getKey(bigger);          
 					
-					//check if bigger decomposition in  recipeCachematch outputcount					
+					//check if bigger decomposition in  recipeCachematch outputcount	
 					if (recipeCache.containsKey(key) && recipeCache.get(key).get(0).getCount() == outputCount
 							&& !descompCache.contains(key)) {
 
 		    			descompCache.add(key);
-		    			//Uncraftingdropper.logger.info(output+":Added to descompCache: " + key + " -> " + descompCache.get(key));
+		    			//Uncraftingdropper.logger.info(output+":Added to descompCache: " + key + " -> " + key);
 		    		}
 		    	}
             }     
@@ -217,9 +224,13 @@ public class UncraftHelper {
     	
         //get ConfigDir
     	
-        Path configDir = Minecraft.getMinecraft().mcDataDir.toPath().resolve("config");               
-     
+        //Path configDir = Minecraft.getMinecraft().mcDataDir.toPath().resolve("config");                    
+        //Path filePath = configDir.resolve("uncraftingdropper/recipes.txt");
+        // Use FMLPaths for side-independent config directory access
+
+    	Path configDir = new File("config").toPath();
         Path filePath = configDir.resolve("uncraftingdropper/recipes.txt");
+    	
 
         if (!Files.exists(filePath)) {
             System.out.println("File 'recipes.txt' does not exist. Skipping custom recipes loading.");
@@ -311,7 +322,7 @@ public class UncraftHelper {
      * @param stack The ItemStack to compute components for
      * @return List of ItemStacks representing the components with adjusted damage and quantities
      */
-    public static List<ItemStack> computeComponentsWithDamageAndProbability(ItemStack stack) {
+    public static List<ItemStack> computeComponentsWithDamageAndProbability(ItemStack stack, int tier) {
     	
     	List<ItemStack> adjustedComponents=new ArrayList<>();
         // Check if the stack is valid
@@ -335,7 +346,7 @@ public class UncraftHelper {
         float damagePercentage = (1.0f -((maxDamage > 0) ? (float) damage / (float) maxDamage : 0.0f));
 
         // Apply damage percentage to the fixed reduction, and then apply the probability reduction
-        float fixedReduction =  ((1.0f -((float) TTConfig.fixedReduction / 100.0f)) * damagePercentage);
+        float fixedReduction =  ((1.0f -((float) getLossChance(tier) / 100.0f)) * damagePercentage);
         //get probabilityReduction with math ramdom
         		// Ensure the probability reduction is between 0 and 1
        
@@ -407,15 +418,21 @@ public class UncraftHelper {
         
         
         
-        if (isEmpty) {
-			// If the adjusted components are empty, return an empty list
-			if (!TTConfig.comsumeItem) adjustedComponents.clear();
-			return adjustedComponents;		
-		}
+
         
         //if the stsck is enchanted, we need to extract the books gets a list of enchanted books
         List<ItemStack> enchantedBooks = extractEnchantedBooks(stack);
-        int bookProbability = TTConfig.bookProbability;
+        int bookProbability =  getBookProbability(tier);
+
+        
+        if (isEmpty) {
+			// If the adjusted components are empty, return an empty list
+        	//if not enchantedBook return empty list
+        	//Only continue if ConsumeItem activated and try to get a book, but if not , the item will be lost
+			if (!TTConfig.comsumeItem||enchantedBooks.isEmpty()) adjustedComponents.clear();			
+			return adjustedComponents;		
+		}
+        
         
         if (!enchantedBooks.isEmpty()) {
         	
@@ -557,6 +574,75 @@ public class UncraftHelper {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+    
+    public static int getProcessingTicks(int tier) {
+    	//base value is 5
+        switch (tier) {
+        
+        	case 1: // Stone
+        		
+        		return 50;
+        
+            case 2: // Iron
+
+                return 25;
+
+
+            case 3: // Gold
+                return 10;
+
+
+            case 4: // Diamond
+                return 5;
+
+        }
+        return 0;
+    }
+
+    public static int getBookProbability(int tier) {
+    	
+    	float remainingProbability= (100f -TTConfig.bookProbability)/4.0f;
+    	
+        switch (tier) { 
+    	case 1: // Stone
+
+    		return TTConfig.bookProbability;
+    		
+        case 2: // Iron
+
+            return TTConfig.bookProbability + Math.round(remainingProbability) ;
+
+        case 3: // Gold
+            return TTConfig.bookProbability + Math.round(remainingProbability*2);
+
+        case 4: // Diamond
+            return TTConfig.bookProbability + Math.round(remainingProbability*3.5f);
+
+        }
+		return 0;
+    }
+    
+     public static int getLossChance(int tier) {
+        switch (tier) { 
+        	case 1: // Stone
+
+        		return TTConfig.fixedReduction;
+        
+            case 2: // Iron
+
+                return TTConfig.fixedReduction/2;
+
+
+            case 3: // Gold
+                return TTConfig.fixedReduction/4;
+
+
+            case 4: // Diamond
+                return TTConfig.fixedReduction/10;
+
+        }
+        return 0;
     }
 }
 

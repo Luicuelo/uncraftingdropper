@@ -4,3 +4,6 @@ gui.uncraftingdropper.category=Uncrafting Dropper
 # Blocks
 tile.uncraftingdropper.uncraftingdropper.name=Uncrafting Dropper
 uncraftingdropper.uncraftingdropper.name=Uncrafting Dropper
+uncraftingdropper.irn_uncraftingdropper.name=Iron Uncrafting Dropper
+uncraftingdropper.gld_uncraftingdropper.name=Gold Uncrafting Dropper
+uncraftingdropper.dmd_uncraftingdropper.name=Diamond Uncrafting Dropper
