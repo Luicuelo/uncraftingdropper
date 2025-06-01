@@ -3,7 +3,6 @@ package es.luiscuesta.uncraftingdropper.common.tileentity;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Items;
-import net.minecraft.client.Minecraft;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.item.ItemStack;
 

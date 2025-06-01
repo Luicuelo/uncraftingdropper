@@ -253,9 +253,8 @@ public class TileEntityUncraftingdropper extends TileEntity implements  ITickabl
 			
 			if(getWorld() == null || getWorld().isRemote) return; // Check if the world is not null and not remote			
 			//logMessage("onContentsChanged------------------:"+getStackName());
-			currentComponents= UncraftHelper.computeComponentsWithDamageAndProbability(getStackCopy(),tier);						
-			sendUpdates();						
-			
+			currentComponents= UncraftHelper.computeComponentsWithDamageAndProbability(getStackCopy(),tier);	
+			sendUpdates();									
 		}
 
 		public boolean isItemValidForSlot(int index, ItemStack stack) {
@@ -300,6 +299,11 @@ public class TileEntityUncraftingdropper extends TileEntity implements  ITickabl
 			return ItemStack.EMPTY;		
 		}
 
+		public void empty() {
+			internalStack = ItemStack.EMPTY;
+			onContentsChanged();
+		}
+		
 		public ItemStack getStackCopy() {
 			return internalStack.copy();				
 		}
@@ -477,8 +481,8 @@ public class TileEntityUncraftingdropper extends TileEntity implements  ITickabl
 		if (currentComponentsIfEmpty()) {//cant uncrafft			
 			//inventory.logMessage("We are going to dispense the stack "+inventory.getStackName());
 			ItemStack itemStackCopy = inventory.getStackCopy();
-			boolean dispensed=dispense(this, itemStackCopy);
-			if (dispensed) {
+			if (dispense(this, itemStackCopy)) {
+				this.playDispenseSound(this,0.2F);
 				//inventory.logMessage("Item dispensed");
 				if(itemStackCopy.getCount()==0) itemStackCopy= ItemStack.EMPTY; // Set the stack to empty				
 				inventory.setStackInSlot(0, itemStackCopy); // Set the stack to the new value
@@ -488,26 +492,23 @@ public class TileEntityUncraftingdropper extends TileEntity implements  ITickabl
 		}else {
 	
 			ItemStack itemStack = currentComponents.get(0);			
-			ItemStack itemStackCopy = itemStack.copy();
+			if (itemStack==null||itemStack.isEmpty())  return;			
 			int quantity = itemStack.getCount();
+			if (quantity==0) return;
 			
-			boolean dispensed = true;
+
 			//inventory.logMessage("We are going to dispense an item:"+itemStackCopy.getDisplayName());
-			if (quantity>0) dispensed=dispense(this, itemStackCopy);
-			
-			if (dispensed) {
+			if (dispense(this, itemStack)) {
+				this.playDispenseSound(this,0.2F);
 				//if the item is dispensed, remove one from the list
 				//inventory.logMessage("Item dispensed:"+itemStackCopy.getDisplayName());
-				if(quantity>1) {
-					itemStack.shrink(1); // Remove one from the stack	 			
-				}else {
+				if(itemStack.getCount()==0) {					
 					currentComponents.remove(0);
-				}
+				}		
 				
 				if (currentComponents.size()==0) {		
-					//inventory.logMessage("Components list is empty; set stack to empty");
-					inventory.setStackInSlot(0, ItemStack.EMPTY);
-				}													
+					inventory.empty(); // remove the item is already uncrafted
+				}
 			}
 		}
 	}
@@ -548,7 +549,7 @@ public class TileEntityUncraftingdropper extends TileEntity implements  ITickabl
     	IBlockState actualState = tileWorld.getBlockState(pos); // Get the actual state at the TileEntity's position
     	
     	
-    	this.playDispenseSound(tileEntity,0.2F);
+    
     	if (inventoryPos==null) {
 	    	EnumFacing enumfacing=actualState.getValue(BlockUncraftingdropper.FACING); // Get the facing direction from the block state    	     	
 	        dispenseStack(tileEntity, stack,enumfacing);
@@ -560,7 +561,8 @@ public class TileEntityUncraftingdropper extends TileEntity implements  ITickabl
             TileEntity inventoryToInsert = getWorld().getTileEntity(inventoryPos);
             if (inventoryToInsert!=null&&inventoryToInsert instanceof IInventory) {
 				//System.out.println("DBG: Insert in inventory");
-	            return (insertInInventory(stack, (IInventory)inventoryToInsert));            		            	
+            	boolean inserted=insertInInventory(stack, (IInventory)inventoryToInsert);
+				return (inserted);            		            	
             }
             return false;
 		} 
@@ -633,42 +635,50 @@ public class TileEntityUncraftingdropper extends TileEntity implements  ITickabl
 		if (itemStackIn == ItemStack.EMPTY)	return false;
 	
 		//System.out.println("DBG: Try to insert into inventoryToInsert:"+itemStackInMetadata);
-		for (int i = 0; i < inventoryToInsert.getSizeInventory(); ++i) {
-			itemStack = inventoryToInsert.getStackInSlot(i);
-			if (!inventory.isStackEmpty()) {
-				
-				int quantity = itemStack.getCount();
-				int maxQuantity = itemStack.getMaxStackSize();
-	
-				if (quantity < inventoryToInsert.getInventoryStackLimit() && quantity < maxQuantity) {
-					if (itemStack.getItem().equals(itemStackIn.getItem())
-							&& compareItemStacks(itemStackIn, itemStack) ) {
-						itemStack.setCount(quantity + 1);
-						if (itemStackIn.getCount() - 1 <= 0)
-							itemStackIn.setCount(0);
-						else {
-							itemStackIn.shrink(1);
-						}
-						//System.out.println("DBG: Same stack at slot:"+i);
-						inventoryToInsert.setInventorySlotContents(i, itemStack);
-						return true;
-					}
-				}
-			}
-		}
-	
+		
+	    // First try to merge with existing stacks
+	    for (int i = 0; i < inventoryToInsert.getSizeInventory(); ++i) {
+	        ItemStack existingStack = inventoryToInsert.getStackInSlot(i);
+	        
+	        // Skip empty slots in first pass
+	        if (existingStack.isEmpty()) continue;
+	        
+	        // Check if items match first (fail fast if they don't)
+	        if (!existingStack.getItem().equals(itemStackIn.getItem()) || 
+	            !compareItemStacks(itemStackIn, existingStack)) {
+	            continue;
+	        }
+
+	        // Now check if we can add to this stack
+	        int quantity = existingStack.getCount();
+	        int maxQuantity = existingStack.getMaxStackSize();
+	        
+	        if (quantity < inventoryToInsert.getInventoryStackLimit() && 
+	            quantity < maxQuantity) {
+	            // We can merge with this stack
+	            existingStack.grow(1);
+	            itemStackIn.shrink(1);
+	            if (itemStackIn.getCount() <= 0) {
+	            	itemStackIn.setCount(0);
+	            }
+	            inventoryToInsert.setInventorySlotContents(i, existingStack);
+	            return true;
+	        }
+	    }
+			
 		for (int i = 0; i < inventoryToInsert.getSizeInventory(); ++i) {
 			itemStack = inventoryToInsert.getStackInSlot(i);
 			if (itemStack == null || itemStack.isEmpty()||itemStack == ItemStack.EMPTY) {
 				//System.out.println("DBG: Slot empty:"+i);
+				
+				if (!inventoryToInsert.isItemValidForSlot(i, itemStackIn)) continue;
 				itemStack = itemStackIn.copy();
-				itemStack.setCount(1);
+				itemStack.setCount(1);				
 				inventoryToInsert.setInventorySlotContents(i, itemStack);
-				if (itemStackIn.getCount() - 1 <= 0)
+				itemStackIn.shrink(1);
+				if (itemStackIn.getCount() <= 0) {
 					itemStackIn.setCount(0);
-				else {
-					itemStackIn.shrink(1);
-				}
+				}				
 				return true;
 			}
 		}
