@@ -1,18 +1,28 @@
 /*
- * Copyright (c) 2020. Katrina Knight, Luis Cuesta 2024
+ * Luis Cuesta 2024
  */
 
 package es.luiscuesta.uncraftingdropper.client.rendering;
 
 import javax.annotation.Nullable;
+import org.lwjgl.opengl.GL11;
 
 import es.luiscuesta.uncraftingdropper.common.tileentity.TileEntityUncraftingdropper;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.particle.Particle;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.RenderItem;
-import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.block.model.IBakedModel;
+import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
+import net.minecraftforge.client.model.pipeline.LightUtil;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -20,45 +30,240 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 @SideOnly(Side.CLIENT)
 public class TileEntityUncraftingdropperRenderer extends TileEntitySpecialRenderer<TileEntityUncraftingdropper> {
+    @SideOnly(Side.CLIENT)
+    
+    public class ParticleEnchantmentTable extends Particle
+    {
+        private final float oSize;
+        private final double coordX;
+        private final double coordY;
+        private final double coordZ;
+
+        protected ParticleEnchantmentTable(World worldIn, double xCoordIn, double yCoordIn, double zCoordIn, double xSpeedIn, double ySpeedIn, double zSpeedIn)
+        {
+            super(worldIn, xCoordIn, yCoordIn, zCoordIn, xSpeedIn, ySpeedIn, zSpeedIn);
+            this.motionX = xSpeedIn;
+            this.motionY = ySpeedIn;
+            this.motionZ = zSpeedIn;
+            this.coordX = xCoordIn;
+            this.coordY = yCoordIn;
+            this.coordZ = zCoordIn;
+            this.prevPosX = xCoordIn + xSpeedIn;
+            this.prevPosY = yCoordIn + ySpeedIn;
+            this.prevPosZ = zCoordIn + zSpeedIn;
+            this.posX = this.prevPosX;
+            this.posY = this.prevPosY;
+            this.posZ = this.prevPosZ;
+            float f = this.rand.nextFloat() * 0.6F + 0.4F;
+            this.particleScale = this.rand.nextFloat() * 0.2F + 0.1F;
+            this.oSize = this.particleScale;
+            this.particleRed = 0.9F * f;
+            this.particleGreen = 0.9F * f;
+            this.particleBlue = f;
+            this.particleMaxAge = (int)(Math.random() * 10.0D) + 30;
+            this.setParticleTextureIndex((int)(Math.random() * 8.0D + 1.0D + 144.0D));
+        }
+
+        public void move(double x, double y, double z)
+        {
+            this.setBoundingBox(this.getBoundingBox().offset(x, y, z));
+            this.resetPositionToBB();
+        }
+
+
+
+        public void onUpdate()
+        {
+            this.prevPosX = this.posX;
+            this.prevPosY = this.posY;
+            this.prevPosZ = this.posZ;
+            float f = ((float)this.particleAge / (float)this.particleMaxAge)/2.0F;
+            f = 1.0F - f;
+            float f1 = 1.0F - f;
+            f1 = f1 * f1;
+            f1 = f1 * f1;
+            this.posX = this.coordX + this.motionX * (double)f;
+            this.posY = this.coordY + this.motionY * (double)f - (double)(f1 * 1.2F);
+            this.posZ = this.coordZ + this.motionZ * (double)f;
+            this.particleAlpha = 0.5F - ((float)this.particleAge / (float)this.particleMaxAge);
+            if (this.particleAge++ >= this.particleMaxAge)
+            {
+                this.setExpired();
+            }
+        }
+    }
+    
+
 	//private static FloatBuffer colorBuffer = GLAllocation.createDirectFloatBuffer(4);
 	private static float rotation = 0.0F; // Static variable to share rotation across all instances
 
 
 	@Override
 	public void render(@Nullable TileEntityUncraftingdropper te, double x, double y, double z, float pticks, int digProgress, float unused) {
-
-		
 		if(te==null)return;		
 		if(te.isStackEmpty()) return;
         ItemStack wrk=te.getStackCopy();
 	    
 	  	try {
-	  		
 	        // Increment the static rotation angle
 	        rotation += 0.5F; // Adjust the increment value for desired speed
 	        if (rotation >= 360.0F) {
 	            rotation -= 360.0F; // Keep the rotation within 0-360 degrees
 	        }
-	  		drawItem(x, y+0.5, z,wrk);
+	        drawItemWithLightOverlay(x, y+0.5, z,wrk);
+	        
+	        World world = te.getWorld();
+	        if(world!=null && world.isRemote)
+	        {
+	        	//get position from te
+	        	BlockPos pos=te.getPos();
+	        	renderParticles(world,pos.getX(),pos.getY(),pos.getZ());
+	        }
+	        
+	
 						
-			} catch (Exception e) {}
-					///e.printStackTrace();					
+		} catch (Exception e) {}
 	}
 	
-	private void drawItem(double x, double y, double z, ItemStack wrk ) {
-			GlStateManager.pushMatrix();
-		    GlStateManager.color(1.0F, 1.0F, 1.0F, 1F);
-			GlStateManager.translate(x+ 0.5F, y+ 0.7F, z+ 0.5F);
-			GlStateManager.scale(0.25F, 0.25F, 0.25F); // Scale down to half size
-		    GlStateManager.rotate(rotation, 0.0F, 1.0F, 0.0F); // Rotate 45º around the Y-axis
-			RenderItem rendemItem=Minecraft.getMinecraft().getRenderItem();
-			if (rendemItem!=null) rendemItem.renderItem(wrk,  ItemCameraTransforms.TransformType.NONE);
-			GlStateManager.popMatrix();	
+	private void  renderParticles(World world,double px, double py, double pz) {
+		
+	    // Spawn particles only on client side
+	    //if (isTitleTick()) {
+	    if (world.getTotalWorldTime() % 10 == 0) {
+	        double x = px+ 0.5;
+	        double y = py + 1.3;
+	        double z = pz + 0.5;
+	        
+	        // Spawn particles around the item
+	        for (int i = 0; i < 2; i++) {
+	            double offsetX = (world.rand.nextDouble() - 0.5) * 0.3;
+	            double offsetY = (world.rand.nextDouble() - 0.5) * 0.3;
+	            double offsetZ = (world.rand.nextDouble() - 0.5) * 0.3;
+	           
+	            /*
+	            world.spawnParticle(
+	            		EnumParticleTypes.SPELL_WITCH,
+	                x + offsetX, y + offsetY, z + offsetZ,
+	                0, 0.05, 0
+	            );*/
+
+	            ParticleEnchantmentTable particle = new ParticleEnchantmentTable(world, x + offsetX, y + offsetY, z + offsetZ, 0, 0.01, 0);
+		        if (particle != null) {
+		            Minecraft.getMinecraft().effectRenderer.addEffect(particle);
+		        }
+	        }
+	    }
 	}
-	
 
-	
+	private void drawItemWithLightOverlay(double x, double y, double z, ItemStack stack) {
+	    Minecraft mc = Minecraft.getMinecraft();
+	    IBakedModel model = mc.getRenderItem().getItemModelWithOverrides(stack, null, null);
 
-	
+	    GlStateManager.pushMatrix();
+
+	    float scale = 0.25F;
+	    float centerOffset = 0.5F * scale;
+
+	    // Base position
+	    float floatY = (float) (Math.sin(rotation / 20F) * 0.05);
+	    GlStateManager.translate(x + 0.5F - centerOffset, y + 0.7F + floatY, z + 0.5F - centerOffset);
+
+	    // Rotate
+	    GlStateManager.translate(centerOffset, 0F, centerOffset);
+	    GlStateManager.rotate(rotation, 0F, 1F, 0F);
+	    GlStateManager.translate(-centerOffset, 0F, -centerOffset);
+	    GlStateManager.scale(scale, scale, scale);
+
+	    mc.getTextureManager().bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
+	    Tessellator tessellator = Tessellator.getInstance();
+	    BufferBuilder buffer = tessellator.getBuffer();
+
+	    GlStateManager.enableBlend();
+
+	    // Increase base alpha to make item more solid
+	    float alphaFloat = (float)((Math.sin(rotation / 10F) * 0.1F) + 0.9F);
+	    int alphaInt = (int)(alphaFloat * 255.0F);
+	    
+	    int overlayColor = (alphaInt << 24) | 0x00FFFFFF;  
+	    
+	    buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.ITEM);
+	   
+	    for (EnumFacing side : EnumFacing.values()) {
+	        for (BakedQuad quad : model.getQuads(null, side, 0)) {
+	        	LightUtil.renderQuadColor(buffer, quad, overlayColor);	        	
+	        }
+	    }
+	    for (BakedQuad quad : model.getQuads(null, null, 0)) {
+	    	LightUtil.renderQuadColor(buffer, quad, overlayColor);
+	    }
+	    tessellator.draw();
+
+
+	    GlStateManager.disableBlend();
+	    GlStateManager.popMatrix();
+	    
+
+	}
+
+
 	
 }
+
+/*
+private void drawItem(double x, double y, double z, ItemStack wrk ) {
+		GlStateManager.pushMatrix();
+	    GlStateManager.color(1.0F, 1.0F, 1.0F, 1F);
+		GlStateManager.translate(x+ 0.5F, y+ 0.7F, z+ 0.5F);
+		GlStateManager.scale(0.25F, 0.25F, 0.25F); // Scale down to half size
+	    GlStateManager.rotate(rotation, 0.0F, 1.0F, 0.0F); // Rotate around the Y-axis
+		RenderItem rendemItem=Minecraft.getMinecraft().getRenderItem();
+		if (rendemItem!=null) rendemItem.renderItem(wrk,  ItemCameraTransforms.TransformType.NONE);
+		GlStateManager.popMatrix();	
+}
+
+
+    public static class ParticleAura extends net.minecraft.client.particle.Particle {
+        public ParticleAura(World world, double x, double y, double z, double vx, double vy, double vz) {
+            super(world, x, y, z, vx, vy, vz);
+            
+            this.particleMaxAge = 40 + world.rand.nextInt(20);
+            this.setSize(0.1F, 0.1F);
+            this.particleScale = 1.0F; // Make it larger
+            
+            this.motionX = vx;
+            this.motionY = vy;
+            this.motionZ = vz;
+                       
+            this.particleGravity = 0;
+            
+            // Bright blue color
+            this.particleRed = 0.3F;
+            this.particleGreen = 0.7F;
+            this.particleBlue = 1.0F;
+            
+            // Use a texture that definitely exists in Minecraft 1.12
+            this.setParticleTexture(Minecraft.getMinecraft().getTextureMapBlocks()           	
+              .getAtlasSprite("minecraft:particle/particles"));
+            
+            
+        }
+
+        @Override
+        public int getFXLayer() {
+            return 1; // or 0, try both
+        }
+        
+        @Override
+        public void onUpdate() {
+            super.onUpdate();
+            if (this.particleAge++ >= this.particleMaxAge) {
+                this.setExpired();
+            }
+            this.particleAlpha = 1.0F - ((float)this.particleAge / (float)this.particleMaxAge);
+            this.motionX *= 0.95;
+            this.motionY *= 0.95;
+            this.motionZ *= 0.95;
+        }
+    }
+
+*/
