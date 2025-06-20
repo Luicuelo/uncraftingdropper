@@ -1,10 +1,5 @@
 package es.luiscuesta.uncraftingdropper.common.blocks;
 
-import java.util.List;
-import java.util.Random;
-
-import javax.annotation.Nullable;
-
 import es.luiscuesta.uncraftingdropper.Uncraftingdropper;
 import es.luiscuesta.uncraftingdropper.common.libs.LibMisc;
 import net.minecraft.block.Block;
@@ -28,10 +23,16 @@ import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.util.List;
+import java.util.Objects;
+import java.util.Random;
+
 public abstract  class BlockTileEntity<T extends TileEntity> extends Block {
 	
-    private String baseName;
-    private ResourceLocation resourceLocation;
+    private final String baseName;
+    private final ResourceLocation resourceLocation;
     private boolean preserveTileEntity;
     
     
@@ -45,7 +46,8 @@ public abstract  class BlockTileEntity<T extends TileEntity> extends Block {
     }
     
     
-	public   String getUnlocalizedName() {
+	@Nonnull
+    public   String getUnlocalizedName() {
 		return resourceLocation.getResourceDomain() + "." + resourceLocation.getResourcePath();
 	}
 	
@@ -78,7 +80,7 @@ public abstract  class BlockTileEntity<T extends TileEntity> extends Block {
 	public void registerModels(ModelRegistryEvent event) {
 		Item item=Item.getItemFromBlock(this);
 		if(item != Items.AIR)	{			
-			ModelLoader.setCustomModelResourceLocation(item, 0, new ModelResourceLocation(this.getRegistryName(), "inventory"));			
+			ModelLoader.setCustomModelResourceLocation(item, 0, new ModelResourceLocation(Objects.requireNonNull(this.getRegistryName()), "inventory"));
 		}
 	}
 	
@@ -92,7 +94,7 @@ public abstract  class BlockTileEntity<T extends TileEntity> extends Block {
     
     @Override
     @SideOnly(Side.CLIENT)
-    public void addInformation(ItemStack stack, @Nullable World worldIn, List<String> tooltip, ITooltipFlag flagIn) {
+    public void addInformation(@Nonnull ItemStack stack, @Nullable World worldIn, @Nonnull List<String> tooltip, @Nonnull ITooltipFlag flagIn) {
         super.addInformation(stack, worldIn, tooltip, flagIn);
         int i = 0;
         String name = "item." + LibMisc.RESOURCE_PREFIX + baseName + "." + i;
@@ -109,7 +111,7 @@ public abstract  class BlockTileEntity<T extends TileEntity> extends Block {
 
 
     @Override
-    public boolean hasTileEntity(final IBlockState state) {
+    public boolean hasTileEntity(@Nonnull final IBlockState state) {
         return true;
     }
     
@@ -118,7 +120,7 @@ public abstract  class BlockTileEntity<T extends TileEntity> extends Block {
     public abstract void onBlockPlaced(World world,BlockPos pos,ItemStack itemStackUsed);
 
     @Override
-    public abstract TileEntity createTileEntity(World world, IBlockState state);
+    public abstract TileEntity createTileEntity(@Nonnull World world, @Nonnull IBlockState state);
 
 
     @SuppressWarnings("unchecked")
@@ -128,15 +130,15 @@ public abstract  class BlockTileEntity<T extends TileEntity> extends Block {
     }
 
     @Override
-    public boolean removedByPlayer(final IBlockState state, final World world, final BlockPos pos, final EntityPlayer player, final boolean willHarvest) {
-        // If it will harvest, delay deletion of the block until after getDrops
+    public boolean removedByPlayer(@Nonnull final IBlockState state, @Nonnull final World world, @Nonnull final BlockPos pos, @Nonnull final EntityPlayer player, final boolean willHarvest) {
+        // If it harvests, delay deletion of the block until after getDrops
         if(preserveTileEntity && willHarvest && !player.capabilities.isCreativeMode)
             return true;
         return super.removedByPlayer(state, world, pos, player, willHarvest);
     }
 
     @Override
-    public void harvestBlock(final World world, final EntityPlayer player, final BlockPos pos, final IBlockState state, @Nullable final TileEntity te, final ItemStack stack) {
+    public void harvestBlock(@Nonnull final World world, @Nonnull final EntityPlayer player, @Nonnull final BlockPos pos, @Nonnull final IBlockState state, @Nullable final TileEntity te, @Nonnull final ItemStack stack) {
         super.harvestBlock(world, player, pos, state, te, stack);
 
         if (preserveTileEntity) {
@@ -148,14 +150,14 @@ public abstract  class BlockTileEntity<T extends TileEntity> extends Block {
 
     @SuppressWarnings("deprecation")
 	@Override
-    public boolean eventReceived(IBlockState state, World worldIn, BlockPos pos, int id, int param) {
+    public boolean eventReceived(@Nonnull IBlockState state, @Nonnull World worldIn, @Nonnull BlockPos pos, int id, int param) {
         super.eventReceived(state, worldIn, pos, id, param);
         TileEntity tileentity = worldIn.getTileEntity(pos);
         return tileentity != null && tileentity.receiveClientEvent(id, param);
     }
 
 
-    public void updateTick(World world, BlockPos pos, IBlockState state, Random random) {
+    public void updateTick(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull Random random) {
         super.updateTick(world, pos, state, random);
     }
 
@@ -165,7 +167,7 @@ public abstract  class BlockTileEntity<T extends TileEntity> extends Block {
     
     @SuppressWarnings("deprecation")
 	@Override
-    public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos) {
+    public void neighborChanged(@Nonnull IBlockState state, @Nonnull World worldIn, @Nonnull BlockPos pos, @Nonnull Block blockIn, @Nonnull BlockPos fromPos) {
     	super.neighborChanged(state, worldIn, pos, blockIn, fromPos);
         redstoneUpdate(worldIn, pos, state, isPowered(worldIn, pos));
         onNeighborChange(worldIn, pos, state, blockIn, fromPos);
@@ -186,12 +188,12 @@ public abstract  class BlockTileEntity<T extends TileEntity> extends Block {
 	}
 
     @Override
-    public void onBlockAdded(World worldIn, BlockPos pos, IBlockState state) {
+    public void onBlockAdded(@Nonnull World worldIn, @Nonnull BlockPos pos, @Nonnull IBlockState state) {
         super.onBlockAdded(worldIn, pos, state);       
     }
 
     @Override
-    public boolean canConnectRedstone(IBlockState state, IBlockAccess world, BlockPos pos, @Nullable EnumFacing side) {
+    public boolean canConnectRedstone(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nullable EnumFacing side) {
         return false;
     }
 }

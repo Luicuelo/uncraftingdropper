@@ -1,10 +1,5 @@
 package es.luiscuesta.uncraftingdropper.common.tileentity;
 
-import java.util.List;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
 import es.luiscuesta.uncraftingdropper.common.blocks.BlockUncraftingdropper;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
@@ -13,8 +8,6 @@ import net.minecraft.init.SoundEvents;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.network.NetworkManager;
-import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ITickable;
@@ -27,16 +20,29 @@ import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
 
-public class TileEntityUncraftingdropper extends TileEntity implements ITickable {
 
-	private List<ItemStack> currentComponents = new java.util.ArrayList<ItemStack>(); // empty list
-	private MyItemStackHandler inventory = new MyItemStackHandler();
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.util.List;
+
+public class TileEntityUncraftingdropper extends TileEntityBase implements ITickable {
+
+	private List<ItemStack> currentComponents = new java.util.ArrayList<>(); // empty list
+	private final MyItemStackHandler inventory = new MyItemStackHandler();
 	public BlockPos inventoryPos = null;
 	private int lastComparatorSignal = 0;
 	private int ticksUpdate = 20;
 	private int ticksElapsed = 0;
-	private int tier;
+	private BlockUncraftingdropper block;
 
+	public TileEntityUncraftingdropper() {
+		super();
+	}
+		
+	public BlockUncraftingdropper getBlock() {
+		return block;
+	}
+	
 	public boolean isStackEmpty() {
 		return inventory.isStackEmpty();
 	}
@@ -45,9 +51,8 @@ public class TileEntityUncraftingdropper extends TileEntity implements ITickable
 		return inventory.getStackCopy();
 	}
 
-	public ItemStack insertItem(int slot, @Nonnull ItemStack stack, boolean simulate) {
-		ItemStack inserted = inventory.insertItem(slot, stack, simulate);
-		return inserted;
+	public void insertItem(int slot, @Nonnull ItemStack stack, boolean simulate) {
+		 inventory.insertItem(slot, stack, simulate);
 	}
 
 	public boolean currentComponentsIfEmpty() {
@@ -61,25 +66,16 @@ public class TileEntityUncraftingdropper extends TileEntity implements ITickable
 		BlockUncraftingdropper block = (BlockUncraftingdropper) state.getBlock();
 
 		boolean working = !this.isStackEmpty();
-		boolean change = !block.setNewState(pos, world, working); // Notify the block to update its state
-		boolean lastWorking = working;
-		if (change)
-			lastWorking = !lastWorking;
-
-		// System.out.println("Current stack"+inventory.getStackCopy().getDisplayName()
-		// +" working:"+working+" lastworking:"+lastWorking);
-
+		block.setNewState(pos, world, working);
+		/*
+			boolean change = !block.setNewState(pos, world, working); // Notify the block to update its state
+		 	System.out.println("Current stack"+inventory.getStackCopy().getDisplayName()
+		*/
 		markDirty();
 
 		world.notifyBlockUpdate(pos, state, state, 2);
 		world.markBlockRangeForRenderUpdate(pos, pos);
 
-	}
-
-	@Override
-	public NBTTagCompound writeToNBT(NBTTagCompound compound) {
-		writeExtraNBT(compound);
-		return super.writeToNBT(compound);
 	}
 
 	// function to serialize NBT currentComponents
@@ -102,7 +98,9 @@ public class TileEntityUncraftingdropper extends TileEntity implements ITickable
 		if (currentComponents != null)
 			currentComponents.clear();
 		else
-			currentComponents = new java.util.ArrayList<ItemStack>(); // empty list
+			currentComponents = new java.util.ArrayList<>(); // empty list
+		
+		
 		for (int i = 0; nbt.hasKey("component" + i); i++) {
 			NBTTagCompound componentTag = nbt.getCompoundTag("component" + i);
 			ItemStack itemStack = new ItemStack(componentTag.getCompoundTag("item"));
@@ -110,7 +108,7 @@ public class TileEntityUncraftingdropper extends TileEntity implements ITickable
 		}
 	}
 
-	// decorations for ontli server side
+	// decorations for only server side
 
 	public void writeExtraNBT(NBTTagCompound nbttagcompound) {
 
@@ -120,54 +118,10 @@ public class TileEntityUncraftingdropper extends TileEntity implements ITickable
 		// writeFromNBT:"+inventory.getStackName());
 	}
 
-	@Override
-	public void readFromNBT(NBTTagCompound compound) {
-
-		readExtraNBT(compound);
-		// inventory.logMessage("World Server: "+!getWorld().isRemote +" Item stored in
-		// readFromNBT:"+inventory.getStackName());
-		super.readFromNBT(compound);
-	}
-
 	public void readExtraNBT(NBTTagCompound nbttagcompound) {
 
 		inventory.deserializeNBT(nbttagcompound.getCompoundTag("inventory"));
 		deserializeNBTCurrentComponents(nbttagcompound.getCompoundTag("currentComponents"));
-	}
-
-	@Override
-	public NBTTagCompound getUpdateTag() {
-		NBTTagCompound cmp = super.getUpdateTag();
-		writeExtraNBT(cmp);
-		return cmp;
-	}
-
-	@Override
-	public void handleUpdateTag(NBTTagCompound tag) {
-		super.handleUpdateTag(tag);
-		readExtraNBT(tag);
-	}
-
-	@Override
-	public void onDataPacket(NetworkManager net, SPacketUpdateTileEntity pkt) {
-		super.onDataPacket(net, pkt);
-		handleUpdateTag(pkt.getNbtCompound());
-		sendUpdates();
-	}
-
-	@Nullable
-	@Override
-	public SPacketUpdateTileEntity getUpdatePacket() {
-		return new SPacketUpdateTileEntity(this.pos, 5, this.getUpdateTag());
-	}
-
-	@Override // do persistent
-	public boolean shouldRefresh(World world, BlockPos pos, IBlockState oldState, IBlockState newState) {
-		return oldState.getBlock() != newState.getBlock(); // Only refresh if the block type changes
-	}
-
-	public boolean canRedstoneConnect() {
-		return true;
 	}
 
 	private class MyItemStackHandler implements IItemHandler, IItemHandlerModifiable, INBTSerializable<NBTTagCompound> {
@@ -187,10 +141,12 @@ public class TileEntityUncraftingdropper extends TileEntity implements ITickable
 			return (internalStack == null || internalStack.isEmpty());
 		}
 
+		@SuppressWarnings("unused")
 		private int getStackCount() {
 			return internalStack.getCount();
 		}
 
+		@SuppressWarnings("unused")
 		private String getStackName() {
 			return internalStack.getDisplayName();
 		}
@@ -202,9 +158,10 @@ public class TileEntityUncraftingdropper extends TileEntity implements ITickable
 			onContentsChanged();
 		}
 
+		@Nonnull
 		@Override
 		public ItemStack insertItem(int slot, @Nonnull ItemStack stack, boolean simulate) {
-			if (getWorld() == null || getWorld().isRemote)
+			if (getWorld().isRemote)
 				return stack; // Check if the world is not null and not remote
 			ItemStack inserted;
 			if (!isItemValidForSlot(slot, stack))
@@ -236,6 +193,7 @@ public class TileEntityUncraftingdropper extends TileEntity implements ITickable
 			return inserted;
 		}
 
+		@SuppressWarnings("unused")
 		private void logMessage(String msg) {
 			// EntityPlayer player = world.getClosestPlayer(pos.getX(), pos.getY(),
 			// pos.getZ(), 10, false);
@@ -245,11 +203,14 @@ public class TileEntityUncraftingdropper extends TileEntity implements ITickable
 
 		protected void onContentsChanged() {
 
-			if (getWorld() == null || getWorld().isRemote)
-				return; // Check if the world is not null and not remote
-			// logMessage("onContentsChanged------------------:"+getStackName());
-			currentComponents = UncraftHelper.computeComponentsWithDamageAndProbability(getStackCopy(), tier);
-			sendUpdates();
+			if (getWorld().isRemote)
+				return; 
+			
+			// logMessage("onContentsChanged------------------:"+getStackName());			
+			if(block!=null) {
+				currentComponents = UncraftHelper.computeComponentsWithDamageAndProbability(getStackCopy(), block.getTier());
+				sendUpdates();
+			}
 		}
 
 		public boolean isItemValidForSlot(int index, ItemStack stack) {
@@ -286,6 +247,7 @@ public class TileEntityUncraftingdropper extends TileEntity implements ITickable
 			return 1;
 		}
 
+		@Nonnull
 		@Override
 		public ItemStack getStackInSlot(int slot) {
 			if (slot == 0) {
@@ -303,17 +265,15 @@ public class TileEntityUncraftingdropper extends TileEntity implements ITickable
 			return internalStack.copy();
 		}
 
+		@Nonnull
 		@Override
 		public ItemStack extractItem(int slot, int amount, boolean simulate) {
-			// TODO Auto-generated method stub
-			return null;
+			return ItemStack.EMPTY;
 		}
 
 	}
 
-	public TileEntityUncraftingdropper() {
-		super();
-	}
+
 
 	public boolean isTitleTick() {
 
@@ -336,7 +296,7 @@ public class TileEntityUncraftingdropper extends TileEntity implements ITickable
 	    }
 		return signal;
 	}
-
+	
 	private boolean getRedstonePowered() {
 		if (world == null) return false;
 		IBlockState state = world.getBlockState(pos);
@@ -361,7 +321,8 @@ public class TileEntityUncraftingdropper extends TileEntity implements ITickable
 		this.ticksUpdate = speed;
 	}
 
-	public MyItemStackHandler getInventory() {
+	@SuppressWarnings("unused")
+	private MyItemStackHandler getInventory() {
 		return inventory;
 	}
 
@@ -391,11 +352,11 @@ public class TileEntityUncraftingdropper extends TileEntity implements ITickable
 
 		BlockPos pos = getPos();
 		IBlockState state = world.getBlockState(pos);
-		Block bloque = state.getBlock();
-		if (bloque instanceof BlockUncraftingdropper) {
-			((BlockUncraftingdropper) bloque).updateInventoryPosInFrontPosition(world, pos, state);
-			tier = ((BlockUncraftingdropper) bloque).getTier();
-			ticksUpdate = UncraftHelper.getProcessingTicks(tier);
+		Block tblock = state.getBlock();
+		if (tblock instanceof BlockUncraftingdropper) {		
+			block=(BlockUncraftingdropper)  tblock;
+			block.updateInventoryPosInFrontPosition(world, pos, state);
+			ticksUpdate = UncraftHelper.getProcessingTicks(block.getTier());
 			// System.out.println("onLoad: "+tier);
 		}
 
@@ -411,12 +372,11 @@ public class TileEntityUncraftingdropper extends TileEntity implements ITickable
 			EntityItem item = new EntityItem(worldIn, pos.getX(), pos.getY(), pos.getZ(), inventory.getStackCopy());
 			worldIn.spawnEntity(item);
 			inventory.setStackInSlot(0, ItemStack.EMPTY);
-			return;
 		}
 
 		else {
 
-			if (currentComponents != null && currentComponents.size() > 0) {
+			if (currentComponents != null && !currentComponents.isEmpty()) {
 				// for each currentComponents must be spawned as entity in the world before
 				// break the block
 				for (ItemStack component : currentComponents) {
@@ -443,7 +403,7 @@ public class TileEntityUncraftingdropper extends TileEntity implements ITickable
 	public void update() {
 
 		if (world == null) return;
-		if (world != null && world.isRemote)  return;
+		if (world.isRemote)  return;
 		
 		
 		ticksElapsed++;
@@ -455,25 +415,16 @@ public class TileEntityUncraftingdropper extends TileEntity implements ITickable
 		if (inventory.isStackEmpty())
 			return;
 
-        // Spawn particles only occasionally based on world time
-
-		
-		
-		// inventory.logMessage("Item stored is empty");
-		// }else {inventory.logMessage("Item stored is:"+inventory.getStackName());}
-
-		if (currentComponentsIfEmpty()) {// cant uncrafft
-			// inventory.logMessage("We are going to dispense the stack
-			// "+inventory.getStackName());
+		if (currentComponentsIfEmpty()) {// cant uncraft
+			// inventory.logMessage("We are going to dispense the stack " + inventory.getStackName());
 			ItemStack itemStackCopy = inventory.getStackCopy();
 			if (dispense(this, itemStackCopy)) {
-				this.playDispenseSound(this, 0.2F);
+				this.playDispenseSound(this);
 				// inventory.logMessage("Item dispensed");
 				if (itemStackCopy.getCount() == 0)
 					itemStackCopy = ItemStack.EMPTY; // Set the stack to empty
 				inventory.setStackInSlot(0, itemStackCopy); // Set the stack to the new value
 			}
-			return;
 
 		} else {
 
@@ -487,14 +438,14 @@ public class TileEntityUncraftingdropper extends TileEntity implements ITickable
 			// inventory.logMessage("We are going to dispense an
 			// item:"+itemStackCopy.getDisplayName());
 			if (dispense(this, itemStack)) {
-				this.playDispenseSound(this, 0.2F);
+				this.playDispenseSound(this);
 				// if the item is dispensed, remove one from the list
 				// inventory.logMessage("Item dispensed:"+itemStackCopy.getDisplayName());
 				if (itemStack.getCount() == 0) {
 					currentComponents.remove(0);
 				}
 
-				if (currentComponents.size() == 0) {
+				if (currentComponents.isEmpty()) {
 					inventory.empty(); // remove the item is already uncrafted
 				}
 			}
@@ -511,13 +462,13 @@ public class TileEntityUncraftingdropper extends TileEntity implements ITickable
 	 * source.getWorld().playEvent(1000, source.getPos(), 0); }
 	 */
 
-	protected void playDispenseSound(TileEntityUncraftingdropper source, float volume) {
+	protected void playDispenseSound(TileEntityUncraftingdropper source) {
 		// Use this:
 		World world = source.getWorld();
 		BlockPos pos = source.getPos();
 		world.playSound(null, // Player - null for all players
 				pos.getX(), pos.getY(), pos.getZ(), SoundEvents.BLOCK_DISPENSER_DISPENSE, // Or your custom sound
-				SoundCategory.BLOCKS, volume, // Volume (default is 1.0F, lower = quieter)
+				SoundCategory.BLOCKS, (float) 0.2, // Volume (default is 1.0F, lower = quieter)
 				0.8F // Pitch (default is 1.0F, lower = deeper sound)
 		);
 	}
@@ -539,21 +490,19 @@ public class TileEntityUncraftingdropper extends TileEntity implements ITickable
 		{
 			// Check if the block at posCheck has a tile entity with an inventory
 			TileEntity inventoryToInsert = getWorld().getTileEntity(inventoryPos);
-			if (inventoryToInsert != null && inventoryToInsert instanceof IInventory) {
+			if (inventoryToInsert instanceof IInventory) {
 				// System.out.println("DBG: Insert in inventory");
-				boolean inserted = insertInInventory(stack, (IInventory) inventoryToInsert);
-				return (inserted);
+                return (insertInInventory(stack, (IInventory) inventoryToInsert));
 			}
 			return false;
 		}
 
 	}
 
-	protected ItemStack dispenseStack(TileEntityUncraftingdropper source, ItemStack stack, EnumFacing enumfacing) {
+	protected void dispenseStack(TileEntityUncraftingdropper source, ItemStack stack, EnumFacing enumfacing) {
 
 		ItemStack itemstack = stack.splitStack(1);
 		doDispense(source.getWorld(), itemstack, 6, enumfacing);
-		return stack;
 	}
 
 	public void doDispense(World worldIn, ItemStack stack, int speed, EnumFacing facing) {
@@ -600,8 +549,8 @@ public class TileEntityUncraftingdropper extends TileEntity implements ITickable
 
 	private boolean insertInInventory(ItemStack itemStackIn, IInventory inventoryToInsert) {
 
-		ItemStack itemStack = null;
-		if (itemStackIn == ItemStack.EMPTY)
+		ItemStack itemStack;
+		if (itemStackIn.isEmpty())
 			return false;
 
 		// System.out.println("DBG: Try to insert into
@@ -639,7 +588,7 @@ public class TileEntityUncraftingdropper extends TileEntity implements ITickable
 
 		for (int i = 0; i < inventoryToInsert.getSizeInventory(); ++i) {
 			itemStack = inventoryToInsert.getStackInSlot(i);
-			if (itemStack == null || itemStack.isEmpty() || itemStack == ItemStack.EMPTY) {
+			if (itemStack.isEmpty()) {
 				// System.out.println("DBG: Slot empty:"+i);
 
 				if (!inventoryToInsert.isItemValidForSlot(i, itemStackIn))

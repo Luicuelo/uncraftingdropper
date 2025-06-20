@@ -1,7 +1,5 @@
 package es.luiscuesta.uncraftingdropper.common.blocks;
 
-import java.util.ArrayList;
-
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
@@ -12,10 +10,13 @@ import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.registries.IForgeRegistry;
 
+import java.util.ArrayList;
+import java.util.Objects;
+
 public  class RegistrationHandler {
     
-    private ArrayList<BlockTileEntity<?>> blocks = new ArrayList<>();
-    private ArrayList<BlockTileEntity<?>> itemBlocks = new ArrayList<>();
+    private final ArrayList<BlockTileEntity<?>> blocks = new ArrayList<>();
+    private final ArrayList<BlockTileEntity<?>> itemBlocks = new ArrayList<>();
     
     
 	public void addBlockForRegistry(BlockTileEntity<?> block) {
@@ -39,35 +40,33 @@ public  class RegistrationHandler {
         IForgeRegistry<Item> registry = event.getRegistry();
 
 
-		for(int i = 0; i < itemBlocks.size(); i++) {			
-			ItemBlock itemBlock=new ItemBlock ((itemBlocks.get(i)));
-			ResourceLocation rl=new ResourceLocation (itemBlocks.get(i).getItemBlockName()) ;
-			itemBlock.setRegistryName(rl);
-			itemBlock.setUnlocalizedName(itemBlocks.get(i).getUnlocalizedName());					
-			registry.register(itemBlock);
-		}
+        for (BlockTileEntity<?> blockTileEntity : itemBlocks) {
+            ItemBlock itemBlock = new ItemBlock(blockTileEntity);
+            ResourceLocation rl = new ResourceLocation(blockTileEntity.getItemBlockName());
+            itemBlock.setRegistryName(rl);
+            itemBlock.setUnlocalizedName(blockTileEntity.getUnlocalizedName());
+            registry.register(itemBlock);
+        }
 
-		for(int i = 0; i < blocks.size(); i++) {
-			Block block =(blocks.get(i));
-			if (block instanceof BlockTileEntity) {
-				Class<? extends TileEntity> classTileEntity=((BlockTileEntity<?>)block).getClassTileEntity();
-				
-				//if not yet register , register TileEntity
-				try {
-					GameRegistry.registerTileEntity(classTileEntity, block.getRegistryName().toString());
-				}catch
-				(IllegalArgumentException e) {
-					//already registered
-				}	
-			}
-				
-		} 
+        for (BlockTileEntity<?> block : blocks) {
+            if (block != null) {
+                Class<? extends TileEntity> classTileEntity = block.getClassTileEntity();
+                //if not yet register , register TileEntity
+                try {
+                    GameRegistry.registerTileEntity(classTileEntity, Objects.requireNonNull(block.getRegistryName()).toString());
+                } catch
+                (IllegalArgumentException e) {
+                    //already registered
+                }
+            }
+
+        }
     }
 
 
 	public void registerModels(ModelRegistryEvent  event) {		
 		for(int i = 0; i < itemBlocks.size(); i++) {
-			blocks.get(i).registerModels(event);
+			itemBlocks.get(i).registerModels(event);
 		}
 
 		/*

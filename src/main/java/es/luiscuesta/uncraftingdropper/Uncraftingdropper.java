@@ -1,6 +1,5 @@
 //Copyright (c) Luis Cuesta 2025
 package es.luiscuesta.uncraftingdropper;
-import org.apache.logging.log4j.Logger;
 
 import es.luiscuesta.uncraftingdropper.common.blocks.RegistrationHandler;
 import es.luiscuesta.uncraftingdropper.common.libs.LibMisc;
@@ -16,6 +15,7 @@ import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
+import org.apache.logging.log4j.Logger;
 
 @Mod(modid = LibMisc.MOD_ID, name = LibMisc.MOD_NAME,
      version = LibMisc.MOD_VERSION, dependencies = LibMisc.MOD_DEPENDENCIES)
@@ -47,9 +47,13 @@ public class Uncraftingdropper {
   
 	@Mod.EventHandler
 	public void init(FMLInitializationEvent event) {
+			logger.info("initalise FMLServerStartingEvent :" + LibMisc.MOD_NAME);
 			if (commonProxy!=null) commonProxy.init(event);
 
 	}
+	
+    //public void init(FMLServerStartingEvent event)
+    
 
 	@Mod.EventHandler
 	public void postInit(FMLPostInitializationEvent event) {
@@ -59,13 +63,6 @@ public class Uncraftingdropper {
 		MinecraftForge.EVENT_BUS.register(this);
 	}	
 	
-    @Mod.EventHandler
-    public void init(FMLServerStartingEvent event)
-    {
-      logger.info("initalise FMLServerStartingEvent :" + LibMisc.MOD_NAME);
-      //event.registerServerCommand(new HandCommand());
-    }
-    
 
   @Mod.EventHandler
   public void serverLoad(FMLServerStartingEvent event) {
@@ -73,12 +70,4 @@ public class Uncraftingdropper {
   }
 
 }
-
-/* TODO
-
-Cuando se activa el redstone, si esta trabajando, debe seguir en estado de trabajo.
- Podria hacer otro bloque (un cofre) que combinase automaticamente objetos con daño.
- 
- 
-*/
 

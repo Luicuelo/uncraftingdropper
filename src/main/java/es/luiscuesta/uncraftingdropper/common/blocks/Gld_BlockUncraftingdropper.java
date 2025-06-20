@@ -3,19 +3,21 @@ package es.luiscuesta.uncraftingdropper.common.blocks;
 import es.luiscuesta.uncraftingdropper.common.libs.LibBlockNames;
 import es.luiscuesta.uncraftingdropper.common.tileentity.UncraftHelper;
 import net.minecraft.block.material.Material;
-import net.minecraft.util.ResourceLocation;
-
-import java.util.List;
-import javax.annotation.Nullable;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.awt.*;
+import java.util.List;
 
 public class Gld_BlockUncraftingdropper extends BlockUncraftingdropper {
 
 
-	 private static int  TIER=3;
+	 private static final int  TIER=3;
     public ResourceLocation resourceLocation;
 	
 	  public Gld_BlockUncraftingdropper() {
@@ -24,12 +26,18 @@ public class Gld_BlockUncraftingdropper extends BlockUncraftingdropper {
 		  setHardness(3.0F);
 		  setResistance(8.0f);
     }
+
+	  @Override
+	public Color getColour() {
+		    // Gold/yellow color
+		    return new Color(255, 215, 0);
+	}
 	  
     public  int  getTier() {
     	return TIER;
     }	  
     @Override
-    public void addInformation(ItemStack stack, @Nullable World worldIn, List<String> tooltip, ITooltipFlag flagIn) {
+    public void addInformation(@Nonnull ItemStack stack, @Nullable World worldIn, @Nonnull List<String> tooltip, @Nonnull ITooltipFlag flagIn) {
         super.addInformation(stack, worldIn, tooltip, flagIn);
         
         String processing="Processing Time: "+UncraftHelper.getProcessingTicks(TIER)+" ticks";

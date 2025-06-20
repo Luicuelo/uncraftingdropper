@@ -1,9 +1,6 @@
 package es.luiscuesta.uncraftingdropper.common.blocks;
 
 
-
-import java.util.List;
-import javax.annotation.Nullable;
 import es.luiscuesta.uncraftingdropper.common.libs.LibBlockNames;
 import es.luiscuesta.uncraftingdropper.common.tileentity.UncraftHelper;
 import net.minecraft.block.material.Material;
@@ -11,6 +8,11 @@ import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.awt.*;
+import java.util.List;
 
 public class Stn_BlockUncraftingdropper extends BlockUncraftingdropper {
 
@@ -27,7 +29,13 @@ public class Stn_BlockUncraftingdropper extends BlockUncraftingdropper {
     }
     
     @Override
-    public void addInformation(ItemStack stack, @Nullable World worldIn, List<String> tooltip, ITooltipFlag flagIn) {
+    public Color getColour() {
+        // Gray color for stone
+        return new Color(128, 128, 128);
+    }
+    
+    @Override
+    public void addInformation(@Nonnull ItemStack stack, @Nullable World worldIn, @Nonnull List<String> tooltip, @Nonnull ITooltipFlag flagIn) {
         super.addInformation(stack, worldIn, tooltip, flagIn);
         
         String processing="Processing Time: "+UncraftHelper.getProcessingTicks(TIER)+" ticks";

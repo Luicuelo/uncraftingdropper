@@ -1,13 +1,12 @@
 package es.luiscuesta.uncraftingdropper.common.api;
 
+import es.luiscuesta.uncraftingdropper.common.tileentity.UncraftHelper;
 import mezz.jei.api.ingredients.IIngredients;
 import mezz.jei.api.ingredients.VanillaTypes;
 import mezz.jei.api.recipe.IRecipeWrapper;
 import net.minecraft.item.ItemStack;
 
 import java.util.List;
-
-import es.luiscuesta.uncraftingdropper.common.tileentity.UncraftHelper;
 
 public class UncraftingdropperWrapper implements IRecipeWrapper {
     private final String key;

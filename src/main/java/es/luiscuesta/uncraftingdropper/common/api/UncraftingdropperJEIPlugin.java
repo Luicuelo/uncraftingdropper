@@ -1,16 +1,13 @@
 package es.luiscuesta.uncraftingdropper.common.api;
 
-import java.util.ArrayList;
-import java.util.List;
 import es.luiscuesta.uncraftingdropper.common.blocks.ModBlocks;
 import es.luiscuesta.uncraftingdropper.common.tileentity.UncraftHelper;
-import mezz.jei.api.IJeiRuntime;
-import mezz.jei.api.IModPlugin;
-import mezz.jei.api.IModRegistry;
-import mezz.jei.api.IRecipeRegistry;
-import mezz.jei.api.JEIPlugin;
+import mezz.jei.api.*;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 @JEIPlugin

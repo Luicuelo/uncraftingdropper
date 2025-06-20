@@ -3,7 +3,6 @@ package es.luiscuesta.uncraftingdropper.common.blocks;
 import es.luiscuesta.uncraftingdropper.Uncraftingdropper;
 import es.luiscuesta.uncraftingdropper.common.libs.LibMisc;
 import es.luiscuesta.uncraftingdropper.common.tileentity.TileEntityUncraftingdropper;
-
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.PropertyBool;
@@ -17,15 +16,14 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.EnumBlockRenderType;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
+import javax.annotation.Nonnull;
+import java.awt.*;
+import java.util.Objects;
 
 
 public abstract class BlockUncraftingdropper extends BlockTileEntity<TileEntityUncraftingdropper> {
@@ -41,7 +39,6 @@ public abstract class BlockUncraftingdropper extends BlockTileEntity<TileEntityU
         super(Name, material, true);
         setHardness(3.0F);
         setResistance(8.0f);
-        //setDefaultState(this.getBlockState().getBaseState().withProperty(FACING,EnumFacing.NORTH).withProperty(WRK, false).withProperty(POWER, false));
         setDefaultState(this.getBlockState().getBaseState().withProperty(WRK, false).withProperty(POWER, false).withProperty(FACING, EnumFacing.NORTH));
         setTickRandomly(true);
        
@@ -57,37 +54,42 @@ public abstract class BlockUncraftingdropper extends BlockTileEntity<TileEntityU
     	return 1;
     }
     
+    public abstract Color getColour();
+    
+    @Nonnull
     @Override
     public BlockRenderLayer getBlockLayer()
     {
         return BlockRenderLayer.SOLID;
     }
     
-    
+
+
     @Override
-    public boolean isTranslucent(IBlockState state) {
+    public boolean isTranslucent(@Nonnull IBlockState state) {
+        return false;
+    }
+
+    @Override
+    public boolean isOpaqueCube(@Nonnull IBlockState state) {
         return true;
     }
 
     @Override
-    public boolean isOpaqueCube(IBlockState state) {
-        return false;
-    }
-    @Override
-    public boolean isFullCube(IBlockState state) {
+    public boolean isFullCube(@Nonnull IBlockState state) {
         return true;
     }
     
 	
 	@Override
-	public boolean canProvidePower(IBlockState state) {
+	public boolean canProvidePower(@Nonnull IBlockState state) {
 		return false;
 	}
 	
 	
 
 	@Override 
-	public int getWeakPower(IBlockState blockState, IBlockAccess blockAccess, BlockPos pos, EnumFacing side) {
+	public int getWeakPower(@Nonnull IBlockState blockState, @Nonnull IBlockAccess blockAccess, @Nonnull BlockPos pos, @Nonnull EnumFacing side) {
 				
 		//if (blockState.getValue(POWER)) return 15;	
 		return 0;
@@ -96,13 +98,13 @@ public abstract class BlockUncraftingdropper extends BlockTileEntity<TileEntityU
 	
 
 	@Override
-	public int getStrongPower(IBlockState blockState, IBlockAccess blockAccess, BlockPos pos, EnumFacing side) {
+	public int getStrongPower(@Nonnull IBlockState blockState, @Nonnull IBlockAccess blockAccess, @Nonnull BlockPos pos, @Nonnull EnumFacing side) {
 		return this.getWeakPower(blockState, blockAccess, pos, side);		
 	}
 	
     
 	@Override
-	public boolean hasComparatorInputOverride(IBlockState state) {
+	public boolean hasComparatorInputOverride(@Nonnull IBlockState state) {
 		return true;
 	}
 	
@@ -110,51 +112,58 @@ public abstract class BlockUncraftingdropper extends BlockTileEntity<TileEntityU
 
 	
 	@Override
-	public int getComparatorInputOverride(IBlockState state, World world, BlockPos pos){
+	public int getComparatorInputOverride(@Nonnull IBlockState state, @Nonnull World world, @Nonnull BlockPos pos){
 		
 		TileEntityUncraftingdropper uncraftingdropper = (TileEntityUncraftingdropper) world.getTileEntity(pos);		
-		return uncraftingdropper.comparatorSignal();
+		return Objects.requireNonNull(uncraftingdropper).comparatorSignal();
 
 	}
 	
 	
-	@Override
-    public Block setCreativeTab(CreativeTabs tab)
+	@Nonnull
+    @Override
+    public Block setCreativeTab(@Nonnull CreativeTabs tab)
     {
 		super.setCreativeTab(tab);
 		return this;
 	}
         
+    @Nonnull
     @Override
-    public EnumBlockRenderType getRenderType(IBlockState state) {
+    public EnumBlockRenderType getRenderType(@Nonnull IBlockState state) {
         return EnumBlockRenderType.MODEL;
     	//return EnumBlockRenderType.INVISIBLE;
     }
  
 
+    @Nonnull
     @Override
     protected BlockStateContainer createBlockState() {
         return new BlockStateContainer(this, WRK,POWER, FACING);
     }
 
-    public boolean setNewState( BlockPos pos, World worldIn, boolean working) {
+    public void setNewState(BlockPos pos, World worldIn, boolean working) {
     	
     	IBlockState actualState = worldIn.getBlockState(pos);    	
     	IBlockState newState = actualState.withProperty(POWER, isPowered(worldIn, pos)).withProperty(WRK, working);    	
     	worldIn.setBlockState(pos, newState, 2);
-    	
-		return actualState.getValue(POWER) == newState.getValue(POWER) && actualState.getValue(WRK) == newState.getValue(WRK);
-		
-	}
+
+        if (actualState.getValue(POWER) == newState.getValue(POWER)) {
+            actualState.getValue(WRK);
+            newState.getValue(WRK);
+        }
+
+    }
     
    
+    @Nonnull
     @Override
-    public BlockFaceShape getBlockFaceShape(IBlockAccess worldIn, IBlockState state, BlockPos pos, EnumFacing face) {
+    public BlockFaceShape getBlockFaceShape(@Nonnull IBlockAccess worldIn, @Nonnull IBlockState state, @Nonnull BlockPos pos, @Nonnull EnumFacing face) {
         return BlockFaceShape.UNDEFINED;
     }
 
     @Override
-    public int getMetaFromState(IBlockState state) {
+    public int getMetaFromState(@Nonnull IBlockState state) {
        int isWrk=state.getValue(WRK)?1:0;
        int hasPower=state.getValue(POWER)?1:0;       
        int facing=state.getValue(FACING).getHorizontalIndex();
@@ -163,6 +172,7 @@ public abstract class BlockUncraftingdropper extends BlockTileEntity<TileEntityU
        
     }
 
+    @Nonnull
     @Override
     public IBlockState getStateFromMeta(int meta) {
         boolean wrk = (meta & 1) != 0;   
@@ -172,13 +182,13 @@ public abstract class BlockUncraftingdropper extends BlockTileEntity<TileEntityU
     }
 
     @Override
-    public boolean canPlaceBlockAt(World worldIn, BlockPos pos) {
+    public boolean canPlaceBlockAt(@Nonnull World worldIn, @Nonnull BlockPos pos) {
         return super.canPlaceBlockAt(worldIn, pos);
         //&& worldIn.getBlockState(pos.down()).getBlock() == Blocks.HOPPER;
     }
 
     @Override
-    public TileEntity createTileEntity(World world, IBlockState state) {
+    public TileEntity createTileEntity(@Nonnull World world, @Nonnull IBlockState state) {
         return new TileEntityUncraftingdropper();
     }
     
@@ -220,7 +230,7 @@ public abstract class BlockUncraftingdropper extends BlockTileEntity<TileEntityU
     }
 	
     @Override
-    public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
+    public boolean onBlockActivated(@Nonnull World worldIn, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityPlayer playerIn, @Nonnull EnumHand hand, @Nonnull EnumFacing facing, float hitX, float hitY, float hitZ) {
     	if (worldIn.isRemote) return true; //return false;
 		if (hand == EnumHand.OFF_HAND) 	return true;
 		
@@ -245,8 +255,9 @@ public abstract class BlockUncraftingdropper extends BlockTileEntity<TileEntityU
     
 
     @Override
-    public void breakBlock(World worldIn, BlockPos pos, IBlockState state) {
-        TileEntityUncraftingdropper uncraftingdropper = (TileEntityUncraftingdropper) worldIn.getTileEntity(pos);        
+    public void breakBlock(@Nonnull World worldIn, @Nonnull BlockPos pos, @Nonnull IBlockState state) {
+        TileEntityUncraftingdropper uncraftingdropper = (TileEntityUncraftingdropper) worldIn.getTileEntity(pos);
+        if (uncraftingdropper == null) return;
         uncraftingdropper.breakBlock(worldIn, pos, state);
         super.breakBlock(worldIn, pos, state);
     }
@@ -261,7 +272,7 @@ public abstract class BlockUncraftingdropper extends BlockTileEntity<TileEntityU
 
     
 	@Override
-	public void onBlockPlacedBy(World world, BlockPos pos, IBlockState state, EntityLivingBase placer, ItemStack stack) {	
+	public void onBlockPlacedBy(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityLivingBase placer, @Nonnull ItemStack stack) {
 		/*
 		if (placer instanceof EntityPlayer){
 			placerUUID=EntityPlayer.getUUID(((EntityPlayer)placer).getGameProfile());

@@ -1,14 +1,12 @@
 package es.luiscuesta.uncraftingdropper.common.tileentity;
 
+import es.luiscuesta.uncraftingdropper.Uncraftingdropper;
+import es.luiscuesta.uncraftingdropper.common.config.TTConfig;
+import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Items;
-import net.minecraft.enchantment.Enchantment;
 import net.minecraft.item.ItemStack;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import net.minecraft.item.crafting.CraftingManager;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.Ingredient;
@@ -17,27 +15,22 @@ import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.text.TextComponentString;
-import java.util.Map;
-import java.util.Map.Entry;
+import net.minecraftforge.common.util.Constants;
 
-import es.luiscuesta.uncraftingdropper.Uncraftingdropper;
-import es.luiscuesta.uncraftingdropper.common.config.TTConfig;
-
-import java.util.Collections;
-import java.util.HashMap;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-
-import net.minecraftforge.common.util.Constants;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Helper class for uncrafting operations in the mod.
  * Manages recipe caching, component calculation, and custom recipe loading.
  */
+
 public class UncraftHelper {
 
 	/** Cache mapping item keys to their component ingredients */
@@ -54,7 +47,7 @@ public class UncraftHelper {
 	 * 
 	 * @return List of ItemStacks representing custom recipe inputs
 	 */
-	public static final List<ItemStack> getCustomRecipesKeys() {
+	public static List<ItemStack> getCustomRecipesKeys() {
 		return customRecipesKeys;
 	}
 
@@ -101,8 +94,7 @@ public class UncraftHelper {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		ItemStack itemStack = new ItemStack(nbtTag);
-		return itemStack;
+        return new ItemStack(nbtTag);
 	}
 
 	/**
@@ -205,7 +197,7 @@ public class UncraftHelper {
 		Uncraftingdropper.logger.info("------------------initializeCache------------------");
 		for (IRecipe recipe : CraftingManager.REGISTRY) {
 			ItemStack output = recipe.getRecipeOutput();
-			if (output != null && !output.isEmpty()) {
+			if (!output.isEmpty()) {
 
 				int outputCount = output.getCount();
 				if (outputCount == 1) {
@@ -215,7 +207,7 @@ public class UncraftHelper {
 						// Uncraftingdropper.logger.info(output+":Added to recipeCache: " + key + " -> "
 						// + recipe);
 						List<ItemStack> components = computeComponents(recipe);
-						if (components.size() > 0 && !getKey(components.get(0)).equals(key))
+						if (!components.isEmpty() && !getKey(components.get(0)).equals(key))
 							// do not add if ingredient is equal than output
 							recipeCache.put(key, components);
 					}
@@ -225,12 +217,12 @@ public class UncraftHelper {
 
 		for (IRecipe recipe : CraftingManager.REGISTRY) {
 			ItemStack output = recipe.getRecipeOutput();
-			if (output != null && !output.isEmpty()) {
+			if (!output.isEmpty()) {
 
 				int outputCount = output.getCount();
 				if (outputCount > 1 && recipe.getIngredients().size() == 1) {
 					Ingredient ingredient = recipe.getIngredients().get(0);
-					ItemStack ingredientStacks[] = ingredient.getMatchingStacks();
+					ItemStack[] ingredientStacks = ingredient.getMatchingStacks();
 					if (ingredientStacks.length == 0) {
 						continue; // Skip if no matching stacks
 					}
@@ -267,7 +259,7 @@ public class UncraftHelper {
 	 * Loads custom uncrafting recipes from the configuration file.
 	 * Custom recipes allow users to define their own uncrafting rules for items
 	 * that don't have standard crafting recipes or need special handling.
-	 * 
+
 	 * The recipes are stored in NBT format in the config/uncraftingdropper/recipes.txt file.
 	 */
 	public static void loadCustomRecipes() {
@@ -378,7 +370,7 @@ public class UncraftHelper {
 		// Get the recipe cache key for the stack
 		String keyStack = getKey(stack);
 
-		// Get the percentage of reduction from the damage of the stack
+		// Get the percentage of reduction from the damage to the stack
 		int damage = stack.getItemDamage();
 		int maxDamage = stack.getMaxDamage();
 
@@ -388,7 +380,7 @@ public class UncraftHelper {
 		// Apply damage percentage to the fixed reduction, and then apply the
 		// probability reduction
 		float fixedReduction = ((1.0f - ((float) getLossChance(tier) / 100.0f)) * damagePercentage);
-		// get probabilityReduction with math ramdom
+		// get probabilityReduction with math random
 		// Ensure the probability reduction is between 0 and 1
 
 		float probabilityReduction = (1.0f - (float) (((float) TTConfig.probabilityReduction) * Math.random() / 100.0f))
@@ -409,9 +401,10 @@ public class UncraftHelper {
 			if (isReversible(itemStack)) {
 
 				ItemStack smallerItemStack = getSmallerComponentCopy(itemStack);
-				;
-				int smallerQuantity = smallerItemStack.getCount();
-				quantity = quantity * smallerQuantity;
+				if (smallerItemStack == null) continue;
+                int smallerQuantity = smallerItemStack.getCount();
+
+                quantity = quantity * smallerQuantity;
 
 				// search into the i+1 to end of the list for smaller components, if found add
 				// the quantiy and set the quantity to 0
@@ -435,7 +428,7 @@ public class UncraftHelper {
 				if (integerPart > 0) {
 					isEmpty = false;
 					adjustedComponents.add(recipeComponent);
-				} else if (TTConfig.comsumeItem) { // add even is 0
+				} else if (TTConfig.consumeItem) { // add even is 0
 					adjustedComponents.add(recipeComponent);
 				}
 
@@ -443,7 +436,7 @@ public class UncraftHelper {
 				if (decimalPart > 0) {
 					isEmpty = false;
 					adjustedComponents.add(decimalComponent);
-				} else if (TTConfig.comsumeItem) { // add even is 0
+				} else if (TTConfig.consumeItem) { // add even is 0
 					adjustedComponents.add(decimalComponent);
 				}
 
@@ -453,7 +446,7 @@ public class UncraftHelper {
 				if (finalQuantity > 0) {
 					isEmpty = false;
 					adjustedComponents.add(recipeComponent);
-				} else if (TTConfig.comsumeItem) { // add even is 0
+				} else if (TTConfig.consumeItem) { // add even is 0
 					adjustedComponents.add(recipeComponent);
 				}
 			}
@@ -469,14 +462,14 @@ public class UncraftHelper {
 			// if not enchantedBook return empty list
 			// Only continue if ConsumeItem activated and try to get a book, but if not ,
 			// the item will be lost
-			if (!TTConfig.comsumeItem || enchantedBooks.isEmpty())
+			if (!TTConfig.consumeItem || enchantedBooks.isEmpty())
 				adjustedComponents.clear();
 			return adjustedComponents;
 		}
 
 		if (!enchantedBooks.isEmpty()) {
 
-			// depending of the enchant mode , gets the first, random or all
+			// depending on the enchant mode , gets the first, random or all
 			if (TTConfig.enchantMode == 1) {
 				// Get the first enchanted book
 				ItemStack enchantedBook = enchantedBooks.get(0);
@@ -519,7 +512,7 @@ public class UncraftHelper {
 	public static List<ItemStack> computeComponents(IRecipe recipe) {
 
 		List<ItemStack> components = new ArrayList<>();
-		if (recipe == null || recipe.getIngredients() == null || recipe.getIngredients().isEmpty()) {
+		if (recipe == null || recipe.getIngredients().isEmpty()) {
 			return components; // Return an empty list if no recipe is found
 		}
 
@@ -528,9 +521,9 @@ public class UncraftHelper {
 		for (Ingredient ingredient : recipe.getIngredients()) {
 			ItemStack[] matchingStacks = ingredient.getMatchingStacks();
 
-			if (matchingStacks != null && matchingStacks.length > 0) {
+			if (matchingStacks.length > 0) {
 				ItemStack ingredientStack = matchingStacks[0].copy();
-				// if key dont exists, create it, else , sum count
+				// if key don't exist, create it, else , sum count
 				String key = getKey(ingredientStack);
 				int stackCount = ingredientStack.getCount();
 

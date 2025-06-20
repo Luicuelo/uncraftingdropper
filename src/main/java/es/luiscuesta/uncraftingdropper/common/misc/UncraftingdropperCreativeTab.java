@@ -1,11 +1,10 @@
 package es.luiscuesta.uncraftingdropper.common.misc;
 
-import javax.annotation.Nonnull;
-
 import es.luiscuesta.uncraftingdropper.common.blocks.ModBlocks;
-
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.ItemStack;
+
+import javax.annotation.Nonnull;
 
 
 public class UncraftingdropperCreativeTab extends CreativeTabs {
@@ -19,7 +18,8 @@ public class UncraftingdropperCreativeTab extends CreativeTabs {
     	return new ItemStack(ModBlocks.uncraftingdropper);
     }
 
-	@Override
+	@Nonnull
+    @Override
 	public ItemStack getTabIconItem() {
 		return new ItemStack(ModBlocks.uncraftingdropper);
 	}

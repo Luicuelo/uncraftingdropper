@@ -1,7 +1,5 @@
 package es.luiscuesta.uncraftingdropper.proxy;
 
-import java.nio.file.Path;
-
 import es.luiscuesta.uncraftingdropper.Uncraftingdropper;
 import es.luiscuesta.uncraftingdropper.common.blocks.BlockTileEntity;
 import es.luiscuesta.uncraftingdropper.common.blocks.ModBlocks;
@@ -18,6 +16,8 @@ import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+
+import java.nio.file.Path;
 
 @Mod.EventBusSubscriber
 public abstract class ICommonProxy{

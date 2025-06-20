@@ -1,9 +1,6 @@
 package es.luiscuesta.uncraftingdropper.common.blocks;
 
 
-
-import java.util.List;
-import javax.annotation.Nullable;
 import es.luiscuesta.uncraftingdropper.common.libs.LibBlockNames;
 import es.luiscuesta.uncraftingdropper.common.tileentity.UncraftHelper;
 import net.minecraft.block.material.Material;
@@ -12,9 +9,14 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.awt.*;
+import java.util.List;
+
 public class Irn_BlockUncraftingdropper extends BlockUncraftingdropper {
 
-	 private static int  TIER=2;
+	 private static final int  TIER=2;
 	 public Irn_BlockUncraftingdropper() {
         		  
 		  super(LibBlockNames.IRN_UNCRAFTINGDROPPER, Material.IRON);
@@ -27,7 +29,13 @@ public class Irn_BlockUncraftingdropper extends BlockUncraftingdropper {
     }
     
     @Override
-    public void addInformation(ItemStack stack, @Nullable World worldIn, List<String> tooltip, ITooltipFlag flagIn) {
+    public Color getColour() {
+        // Light gray/silver color for iron
+        return new Color(192, 192, 192);
+    }
+    
+    @Override
+    public void addInformation(@Nonnull ItemStack stack, @Nullable World worldIn, @Nonnull List<String> tooltip, @Nonnull ITooltipFlag flagIn) {
         super.addInformation(stack, worldIn, tooltip, flagIn);
         
         String processing="Processing Time: "+UncraftHelper.getProcessingTicks(TIER)+" ticks";

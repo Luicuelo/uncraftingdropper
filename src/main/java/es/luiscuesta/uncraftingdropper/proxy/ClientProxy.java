@@ -39,19 +39,7 @@ public class ClientProxy extends ICommonProxy {
 		Uncraftingdropper.modRegistry.registerModels(event);
 	}
 	
-	/*
-	@SubscribeEvent
-	public static void onTextureStitch(TextureStitchEvent.Pre event) {
 
-		 	TextureStitchEvent.Pre textures =(TextureStitchEvent.Pre) event ;
-		 	ResourceLocation location;
-		 	
-		 	//location=new ResourceLocation(LibMisc.MOD_ID,"blocks/uncraftingdropper/wrk_side");
-            //textures.getMap().registerSprite(location);
-      
-	 }*/
-	
-    
     @Override
     public String localize(String translationKey, Object... args) {
         return I18n.format(translationKey, args);

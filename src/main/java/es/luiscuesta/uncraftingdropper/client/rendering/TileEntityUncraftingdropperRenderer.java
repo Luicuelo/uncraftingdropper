@@ -4,9 +4,7 @@
 
 package es.luiscuesta.uncraftingdropper.client.rendering;
 
-import javax.annotation.Nullable;
-import org.lwjgl.opengl.GL11;
-
+import es.luiscuesta.uncraftingdropper.common.blocks.BlockUncraftingdropper;
 import es.luiscuesta.uncraftingdropper.common.tileentity.TileEntityUncraftingdropper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.particle.Particle;
@@ -15,6 +13,7 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
+import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
@@ -25,6 +24,10 @@ import net.minecraft.world.World;
 import net.minecraftforge.client.model.pipeline.LightUtil;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import org.lwjgl.opengl.GL11;
+
+import javax.annotation.Nullable;
+import java.awt.*;
 
 
 
@@ -32,36 +35,44 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class TileEntityUncraftingdropperRenderer extends TileEntitySpecialRenderer<TileEntityUncraftingdropper> {
     @SideOnly(Side.CLIENT)
     
-    public class ParticleEnchantmentTable extends Particle
+    public static class ParticleEnchantmentTable extends Particle
     {
-        private final float oSize;
-        private final double coordX;
-        private final double coordY;
-        private final double coordZ;
 
-        protected ParticleEnchantmentTable(World worldIn, double xCoordIn, double yCoordIn, double zCoordIn, double xSpeedIn, double ySpeedIn, double zSpeedIn)
+        private final double cordX;
+        private final double cordY;
+        private final double cordZ;
+
+        protected ParticleEnchantmentTable(World worldIn, double xCordIn, double yCordIn, double zCordIn, double xSpeedIn, double ySpeedIn, double zSpeedIn,Color color)
         {
-            super(worldIn, xCoordIn, yCoordIn, zCoordIn, xSpeedIn, ySpeedIn, zSpeedIn);
+            super(worldIn, xCordIn, yCordIn, zCordIn, xSpeedIn, ySpeedIn, zSpeedIn);
             this.motionX = xSpeedIn;
             this.motionY = ySpeedIn;
             this.motionZ = zSpeedIn;
-            this.coordX = xCoordIn;
-            this.coordY = yCoordIn;
-            this.coordZ = zCoordIn;
-            this.prevPosX = xCoordIn + xSpeedIn;
-            this.prevPosY = yCoordIn + ySpeedIn;
-            this.prevPosZ = zCoordIn + zSpeedIn;
+            this.cordX = xCordIn;
+            this.cordY = yCordIn;
+            this.cordZ = zCordIn;
+            this.prevPosX = xCordIn + xSpeedIn;
+            this.prevPosY = yCordIn + ySpeedIn;
+            this.prevPosZ = zCordIn + zSpeedIn;
             this.posX = this.prevPosX;
             this.posY = this.prevPosY;
             this.posZ = this.prevPosZ;
             float f = this.rand.nextFloat() * 0.6F + 0.4F;
             this.particleScale = this.rand.nextFloat() * 0.2F + 0.1F;
-            this.oSize = this.particleScale;
-            this.particleRed = 0.9F * f;
-            this.particleGreen = 0.9F * f;
-            this.particleBlue = f;
-            this.particleMaxAge = (int)(Math.random() * 10.0D) + 30;
+            
+            
+            float f_red= color.getRed()/255.0F;
+            float f_green =color.getGreen()/255.0F;
+            float f_blue =color.getBlue()/255.0F;
+                        
+            this.particleRed =  f_red * f;
+            this.particleGreen = f_green * f;
+            this.particleBlue = f_blue * f;
+                   		
+            this.particleMaxAge = (int)(Math.random() * 10.0D) + 20;
             this.setParticleTextureIndex((int)(Math.random() * 8.0D + 1.0D + 144.0D));
+            
+            
         }
 
         public void move(double x, double y, double z)
@@ -70,22 +81,21 @@ public class TileEntityUncraftingdropperRenderer extends TileEntitySpecialRender
             this.resetPositionToBB();
         }
 
-
-
         public void onUpdate()
         {
             this.prevPosX = this.posX;
             this.prevPosY = this.posY;
             this.prevPosZ = this.posZ;
-            float f = ((float)this.particleAge / (float)this.particleMaxAge)/2.0F;
+            float f = ((float)this.particleAge / (float)this.particleMaxAge)/3.0F;
             f = 1.0F - f;
             float f1 = 1.0F - f;
             f1 = f1 * f1;
             f1 = f1 * f1;
-            this.posX = this.coordX + this.motionX * (double)f;
-            this.posY = this.coordY + this.motionY * (double)f - (double)(f1 * 1.2F);
-            this.posZ = this.coordZ + this.motionZ * (double)f;
-            this.particleAlpha = 0.5F - ((float)this.particleAge / (float)this.particleMaxAge);
+            this.posX = this.cordX + this.motionX * (double)f;
+            this.posY = this.cordY + this.motionY * (double)f - (double)(f1 * 1.2F);
+            this.posZ = this.cordZ + this.motionZ * (double)f;
+            this.particleAlpha = 0.5F - ((float)this.particleAge / (float)this.particleMaxAge)/2.0F;
+            
             if (this.particleAge++ >= this.particleMaxAge)
             {
                 this.setExpired();
@@ -99,7 +109,7 @@ public class TileEntityUncraftingdropperRenderer extends TileEntitySpecialRender
 
 
 	@Override
-	public void render(@Nullable TileEntityUncraftingdropper te, double x, double y, double z, float pticks, int digProgress, float unused) {
+	public void render(@Nullable TileEntityUncraftingdropper te, double x, double y, double z, float ticks, int digProgress, float unused) {
 		if(te==null)return;		
 		if(te.isStackEmpty()) return;
         ItemStack wrk=te.getStackCopy();
@@ -110,22 +120,39 @@ public class TileEntityUncraftingdropperRenderer extends TileEntitySpecialRender
 	        if (rotation >= 360.0F) {
 	            rotation -= 360.0F; // Keep the rotation within 0-360 degrees
 	        }
-	        drawItemWithLightOverlay(x, y+0.5, z,wrk);
-	        
+
+			// saves actual el lightmap
+			int lastBrightnessX = GL11.glGetInteger(GL11.GL_LIGHT0);
+			int lastBrightnessY = GL11.glGetInteger(GL11.GL_LIGHT1);
+			// forces max lightmap
+			net.minecraft.client.renderer.OpenGlHelper.setLightmapTextureCoords(
+					//net.minecraft.client.renderer.OpenGlHelper.lightmapTexUnit, 240f, 240f
+					net.minecraft.client.renderer.OpenGlHelper.lightmapTexUnit, 200f, 200f
+			);
+
+			GlStateManager.enableLighting();
+			net.minecraft.client.renderer.RenderHelper.enableStandardItemLighting();
+
+			drawWithTransparency(x, y+0.5, z,wrk);
+
+			net.minecraft.client.renderer.RenderHelper.disableStandardItemLighting();
+			GlStateManager.disableLighting();
+
+			// restores actual
+			net.minecraft.client.renderer.OpenGlHelper.setLightmapTextureCoords(
+					net.minecraft.client.renderer.OpenGlHelper.lightmapTexUnit, lastBrightnessX, lastBrightnessY);
+
 	        World world = te.getWorld();
-	        if(world!=null && world.isRemote)
+	        if(world.isRemote)
 	        {
-	        	//get position from te
-	        	BlockPos pos=te.getPos();
-	        	renderParticles(world,pos.getX(),pos.getY(),pos.getZ());
+				BlockPos pos = te.getPos();
+	        	BlockUncraftingdropper block=te.getBlock();
+	        	if (block!=null) renderParticles(world,pos.getX(),pos.getY(),pos.getZ(),block.getColour());
 	        }
-	        
-	
-						
-		} catch (Exception e) {}
+		} catch (Exception ignored) {}
 	}
 	
-	private void  renderParticles(World world,double px, double py, double pz) {
+	private void  renderParticles(World world,double px, double py, double pz, Color color) {
 		
 	    // Spawn particles only on client side
 	    //if (isTitleTick()) {
@@ -147,15 +174,25 @@ public class TileEntityUncraftingdropperRenderer extends TileEntitySpecialRender
 	                0, 0.05, 0
 	            );*/
 
-	            ParticleEnchantmentTable particle = new ParticleEnchantmentTable(world, x + offsetX, y + offsetY, z + offsetZ, 0, 0.01, 0);
-		        if (particle != null) {
-		            Minecraft.getMinecraft().effectRenderer.addEffect(particle);
-		        }
+	            ParticleEnchantmentTable particle = new ParticleEnchantmentTable(world, x + offsetX, y + offsetY, z + offsetZ, 0, 0.01, 0, color);
+		        Minecraft.getMinecraft().effectRenderer.addEffect(particle);
 	        }
 	    }
 	}
 
-	private void drawItemWithLightOverlay(double x, double y, double z, ItemStack stack) {
+	@SuppressWarnings("unused")
+	private void drawItem(double x, double y, double z, ItemStack wrk ) {
+		GlStateManager.pushMatrix();
+			GlStateManager.color(1.0F, 1.0F, 1.0F, 1F);
+			GlStateManager.translate(x+ 0.5F, y+ 0.7F, z+ 0.5F);
+			GlStateManager.scale(0.25F, 0.25F, 0.25F); // Scale down to half size
+			GlStateManager.rotate(rotation, 0.0F, 1.0F, 0.0F); // Rotate around the Y-axis
+
+			Minecraft.getMinecraft().getRenderItem().renderItem(wrk,  ItemCameraTransforms.TransformType.NONE);
+		GlStateManager.popMatrix();
+	}
+
+	private void drawWithTransparency(double x, double y, double z, ItemStack stack) {
 	    Minecraft mc = Minecraft.getMinecraft();
 	    IBakedModel model = mc.getRenderItem().getItemModelWithOverrides(stack, null, null);
 
@@ -182,7 +219,7 @@ public class TileEntityUncraftingdropperRenderer extends TileEntitySpecialRender
 
 	    // Increase base alpha to make item more solid
 	    float alphaFloat = (float)((Math.sin(rotation / 10F) * 0.1F) + 0.9F);
-	    int alphaInt = (int)(alphaFloat * 255.0F);
+	    int alphaInt = (int)(alphaFloat * 170.0F);
 	    
 	    int overlayColor = (alphaInt << 24) | 0x00FFFFFF;  
 	    
@@ -209,20 +246,10 @@ public class TileEntityUncraftingdropperRenderer extends TileEntitySpecialRender
 	
 }
 
-/*
-private void drawItem(double x, double y, double z, ItemStack wrk ) {
-		GlStateManager.pushMatrix();
-	    GlStateManager.color(1.0F, 1.0F, 1.0F, 1F);
-		GlStateManager.translate(x+ 0.5F, y+ 0.7F, z+ 0.5F);
-		GlStateManager.scale(0.25F, 0.25F, 0.25F); // Scale down to half size
-	    GlStateManager.rotate(rotation, 0.0F, 1.0F, 0.0F); // Rotate around the Y-axis
-		RenderItem rendemItem=Minecraft.getMinecraft().getRenderItem();
-		if (rendemItem!=null) rendemItem.renderItem(wrk,  ItemCameraTransforms.TransformType.NONE);
-		GlStateManager.popMatrix();	
-}
 
 
-    public static class ParticleAura extends net.minecraft.client.particle.Particle {
+
+/*    public static class ParticleAura extends net.minecraft.client.particle.Particle {
         public ParticleAura(World world, double x, double y, double z, double vx, double vy, double vz) {
             super(world, x, y, z, vx, vy, vz);
             
