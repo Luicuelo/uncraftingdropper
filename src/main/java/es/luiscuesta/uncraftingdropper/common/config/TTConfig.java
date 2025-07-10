@@ -45,6 +45,17 @@ public class TTConfig {
     @Config.RangeInt(min = 1, max = 100)
     public static int probabilityReduction = 0;
     
+    @Config.Comment("Enable XP bottles when uncrafting enchanted books")
+    @Config.Name("Enable XP Bottles from Books")
+    @Config.LangKey("uncraftingdropper.config.enableXPBottles")
+    public static boolean enableXPBottles = true;
+    
+    @Config.Comment("XP multiplier for enchanted books (higher values = more XP bottles)")
+    @Config.Name("XP Bottle Multiplier")
+    @Config.LangKey("uncraftingdropper.config.xpMultiplier")
+    @Config.RangeDouble(min = 0.1, max = 5.0)
+    public static double xpMultiplier = 1.0;
+    
     
     @Mod.EventBusSubscriber
     private static class EventHandler {

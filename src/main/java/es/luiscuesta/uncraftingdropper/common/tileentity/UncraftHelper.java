@@ -347,8 +347,74 @@ public class UncraftHelper {
 	}
 
 	/**
+	 * Calculates XP value from an enchanted book based on enchantment levels.
+	 * 
+	 * @param enchantedBook The enchanted book ItemStack
+	 * @return The XP value to return
+	 */
+	public static int calculateXPFromEnchantedBook(ItemStack enchantedBook) {
+		if (enchantedBook == null || enchantedBook.isEmpty() || enchantedBook.getItem() != Items.ENCHANTED_BOOK) {
+			return 0;
+		}
+
+		Map<Enchantment, Integer> enchantments = EnchantmentHelper.getEnchantments(enchantedBook);
+		int totalXP = 0;
+
+		for (Map.Entry<Enchantment, Integer> entry : enchantments.entrySet()) {
+			Enchantment enchantment = entry.getKey();
+			int level = entry.getValue();
+			
+			// Base XP calculation: rarity affects XP value
+			int baseXP = 1; // Base XP per level
+			
+			// Adjust based on enchantment rarity
+			switch (enchantment.getRarity()) {
+				case COMMON:
+					baseXP = 1;
+					break;
+				case UNCOMMON:
+					baseXP = 3;
+					break;
+				case RARE:
+					baseXP = 5;
+					break;
+				case VERY_RARE:
+					baseXP = 8;
+					break;
+			}
+			
+			// XP increases linearly with level
+			totalXP += baseXP * level * 6;
+		}
+
+		return Math.max(1, totalXP); // Minimum 1 XP
+	}
+
+	/**
+	 * Converts XP amount into XP bottles.
+	 * 
+	 * @param xpAmount The total XP to convert
+	 * @return List of XP bottle ItemStacks
+	 */
+	public static void createXPBottles(List<ItemStack> xpBottles, int xpAmount) {
+
+		// Each XP bottle gives 3-11 XP (average 7), we'll use 7 for calculation
+		int bottleXP = 7;
+		int bottleCount = Math.max(1, (xpAmount + bottleXP - 1) / bottleXP); // Round up
+		
+		// Create XP bottles
+		while (bottleCount > 0) {
+			int stackSize = Math.min(bottleCount, 64); // Max stack size for XP bottles
+			ItemStack xpBottle = new ItemStack(Items.EXPERIENCE_BOTTLE, stackSize);
+			xpBottles.add(xpBottle);
+			bottleCount -= stackSize;
+		}		
+	}
+
+	/**
 	 * Computes components for uncrafting considering item damage and probability.
 	 * Items with damage > 25% have reduced probability of returning components.
+	 * Special handling for enchanted books - returns XP bottles instead.
 	 *
 	 * @param stack The ItemStack to compute components for
 	 * @return List of ItemStacks representing the components with adjusted damage
@@ -361,8 +427,19 @@ public class UncraftHelper {
 		if (stack == null || stack.isEmpty()) {
 			return adjustedComponents;
 		}
+		
+		// Special handling for enchanted books - return XP bottles
+		if (TTConfig.enableXPBottles && stack.getItem() == Items.ENCHANTED_BOOK) {
+			int xpAmount = calculateXPFromEnchantedBook(stack);
+			// Apply tier-based bonus and config multiplier to XP amount
+			float tierMultiplier = 1.0f + (tier - 1) * 0.25f; // 1.0x, 1.25x, 1.5x, 1.75x for tiers 1-4
+			xpAmount = Math.round(xpAmount * tierMultiplier * (float)TTConfig.xpMultiplier);
+			
+			createXPBottles(adjustedComponents,xpAmount);
+			return adjustedComponents;
+		}
 
-		if (isReversible(stack)) {// is reversible, no reduction calulated
+		if (isReversible(stack)) {// is reversible, no reduction calculated
 			adjustedComponents.add(getSmallerComponentCopy(stack));
 			return adjustedComponents;
 		}
