@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "SSS",
+    "SXS",
+    "SSS"
+  ],
+  "key": {
+    "S": {
+      "item": "minecraft:emerald"
+    },
+    "X": {
+      "item": "uncraftingdropper:dmd_uncraftingdropper"
+    }
+  },
+  "result": {
+    "item": "uncraftingdropper:emr_uncraftingdropper",
+    "count": 1
+  }
+}

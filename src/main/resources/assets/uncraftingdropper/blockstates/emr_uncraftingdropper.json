@@ -1,0 +1,31 @@
+{
+"defaults": {"model": "uncraftingdropper:emr_uncraftingdropper_north"},
+ "variants": {
+    "normal": { "model": "uncraftingdropper:emr_uncraftingdropper_north" },
+	"facing=north,power=false,wrk=true": {"model": "uncraftingdropper:emr_uncraftingdropper_north_wrk"},
+	"facing=north,power=false,wrk=false": {"model": "uncraftingdropper:emr_uncraftingdropper_north"},
+	"facing=north,power=true,wrk=true": {"model": "uncraftingdropper:emr_uncraftingdropper_north_wrk_rd"},
+	"facing=north,power=true,wrk=false":  {"model": "uncraftingdropper:emr_uncraftingdropper_north_rd"},
+
+	
+	"facing=east,power=false,wrk=true": {"model": "uncraftingdropper:emr_uncraftingdropper_north_wrk", "y": 90},
+	"facing=east,power=false,wrk=false": {"model": "uncraftingdropper:emr_uncraftingdropper_north", "y": 90},
+	"facing=east,power=true,wrk=true": {"model": "uncraftingdropper:emr_uncraftingdropper_north_wrk_rd", "y": 90}, 	
+	"facing=east,power=true,wrk=false":  {"model": "uncraftingdropper:emr_uncraftingdropper_north_rd", "y": 90},
+
+	"facing=south,power=false,wrk=true": {"model": "uncraftingdropper:emr_uncraftingdropper_north_wrk", "y": 180},
+	"facing=south,power=false,wrk=false": {"model": "uncraftingdropper:emr_uncraftingdropper_north", "y": 180},
+	"facing=south,power=true,wrk=true": {"model": "uncraftingdropper:emr_uncraftingdropper_north_wrk_rd", "y": 180},
+	"facing=south,power=true,wrk=false":  {"model": "uncraftingdropper:emr_uncraftingdropper_north_rd", "y": 180},
+
+	"facing=west,power=false,wrk=true": {"model": "uncraftingdropper:emr_uncraftingdropper_north_wrk", "y": 270},
+	"facing=west,power=false,wrk=false": {"model": "uncraftingdropper:emr_uncraftingdropper_north", "y": 270},
+	"facing=west,power=true,wrk=true": {"model": "uncraftingdropper:emr_uncraftingdropper_north_wrk_rd", "y": 270},
+	"facing=west,power=true,wrk=false":  {"model": "uncraftingdropper:emr_uncraftingdropper_north_rd", "y": 270},   
+	
+	"inventory": {
+	  "model": "uncraftingdropper:emr_uncraftingdropper_north",
+	  "transform": "forge:default-block"
+	}
+ } 
+}

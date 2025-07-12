@@ -432,7 +432,7 @@ public class UncraftHelper {
 		if (TTConfig.enableXPBottles && stack.getItem() == Items.ENCHANTED_BOOK) {
 			int xpAmount = calculateXPFromEnchantedBook(stack);
 			// Apply tier-based bonus and config multiplier to XP amount
-			float tierMultiplier = 1.0f + (tier - 1) * 0.25f; // 1.0x, 1.25x, 1.5x, 1.75x for tiers 1-4
+			float tierMultiplier = 1.0f + (tier - 1) * 0.25f; // 1.0x, 1.25x, 1.5x, 1.75x, 2.0x for tiers 1-5
 			xpAmount = Math.round(xpAmount * tierMultiplier * (float)TTConfig.xpMultiplier);
 			
 			createXPBottles(adjustedComponents,xpAmount);
@@ -710,6 +710,8 @@ public class UncraftHelper {
 			return 10;
 		case 4: // Diamond
 			return 5;
+		case 5: // Emerald
+			return 3;
 		default:
 			return 0;
 		}
@@ -734,6 +736,8 @@ public class UncraftHelper {
 			return TTConfig.bookProbability + Math.round(remainingProbability * 2);
 		case 4: // Diamond
 			return TTConfig.bookProbability + Math.round(remainingProbability * 3.5f);
+		case 5: // Emerald
+			return TTConfig.bookProbability + Math.round(remainingProbability * 3.7f);
 		default:
 			return 0;
 		}
@@ -756,6 +760,8 @@ public class UncraftHelper {
 			return TTConfig.fixedReduction / 4;
 		case 4: // Diamond
 			return TTConfig.fixedReduction / 10;
+		case 5: // Emerald
+			return TTConfig.fixedReduction / 14;			
 		default:
 			return 0;
 		}

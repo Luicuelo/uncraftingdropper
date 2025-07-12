@@ -480,10 +480,11 @@ public class TileEntityUncraftingdropper extends TileEntityBase implements ITick
 		World tileWorld = tileEntity.getWorld(); // Get the world of the TileEntity
 		IBlockState actualState = tileWorld.getBlockState(pos); // Get the actual state at the TileEntity's position
 
+		boolean dispenseFullStack = (block != null && block.getTier() == 5);																		// from the block state
+
 		if (inventoryPos == null) {
 			EnumFacing enumfacing = actualState.getValue(BlockUncraftingdropper.FACING); // Get the facing direction
-																							// from the block state
-			dispenseStack(tileEntity, stack, enumfacing);
+			dispenseStack(tileEntity, stack, enumfacing,dispenseFullStack);
 			this.spawnDispenseParticles(tileEntity, enumfacing);
 			return true;
 		} else // insertInInventory
@@ -492,17 +493,24 @@ public class TileEntityUncraftingdropper extends TileEntityBase implements ITick
 			TileEntity inventoryToInsert = getWorld().getTileEntity(inventoryPos);
 			if (inventoryToInsert instanceof IInventory) {
 				// System.out.println("DBG: Insert in inventory");
-                return (insertInInventory(stack, (IInventory) inventoryToInsert));
+                return (insertInInventory(stack, (IInventory) inventoryToInsert,dispenseFullStack));
 			}
 			return false;
 		}
 
 	}
 
-	protected void dispenseStack(TileEntityUncraftingdropper source, ItemStack stack, EnumFacing enumfacing) {
-
-		ItemStack itemstack = stack.splitStack(1);
-		doDispense(source.getWorld(), itemstack, 6, enumfacing);
+	protected void dispenseStack(TileEntityUncraftingdropper source, ItemStack stack, EnumFacing enumfacing,boolean fullStack) {
+		if (fullStack) {
+			int maxStack = stack.getMaxStackSize();
+			int toDispense = Math.min(stack.getCount(), maxStack);
+						
+			ItemStack itemstack = stack.splitStack(toDispense);
+			doDispense(source.getWorld(), itemstack, 6, enumfacing);
+		} else {
+			ItemStack itemstack = stack.splitStack(1);
+			doDispense(source.getWorld(), itemstack, 6, enumfacing);
+		}
 	}
 
 	public void doDispense(World worldIn, ItemStack stack, int speed, EnumFacing facing) {
@@ -547,9 +555,9 @@ public class TileEntityUncraftingdropper extends TileEntityBase implements ITick
 		return ItemStack.areItemStackTagsEqual(itemStackIn, itemStack);
 	}
 
-	private boolean insertInInventory(ItemStack itemStackIn, IInventory inventoryToInsert) {
+	private boolean insertInInventory(ItemStack itemStackIn, IInventory inventoryToInsert,boolean fullStack) {
 
-		ItemStack itemStack;
+		int initialCount = itemStackIn.getCount();
 		if (itemStackIn.isEmpty())
 			return false;
 
@@ -575,18 +583,28 @@ public class TileEntityUncraftingdropper extends TileEntityBase implements ITick
 			int maxQuantity = existingStack.getMaxStackSize();
 
 			if (quantity < inventoryToInsert.getInventoryStackLimit() && quantity < maxQuantity) {
+				
+				int amountToAdd=1;
+				if(fullStack) {
+					amountToAdd = Math.min(itemStackIn.getCount(), maxQuantity - quantity);
+				}
+				
 				// We can merge with this stack
-				existingStack.grow(1);
-				itemStackIn.shrink(1);
+				existingStack.grow(amountToAdd);
+				
+				itemStackIn.shrink(amountToAdd);
 				if (itemStackIn.getCount() <= 0) {
 					itemStackIn.setCount(0);
 				}
+				
 				inventoryToInsert.setInventorySlotContents(i, existingStack);
-				return true;
+				
+				if (itemStackIn.getCount() == 0) return true; //all has been inserted
 			}
 		}
 
 		for (int i = 0; i < inventoryToInsert.getSizeInventory(); ++i) {
+			ItemStack itemStack;
 			itemStack = inventoryToInsert.getStackInSlot(i);
 			if (itemStack.isEmpty()) {
 				// System.out.println("DBG: Slot empty:"+i);
@@ -594,16 +612,22 @@ public class TileEntityUncraftingdropper extends TileEntityBase implements ITick
 				if (!inventoryToInsert.isItemValidForSlot(i, itemStackIn))
 					continue;
 				itemStack = itemStackIn.copy();
-				itemStack.setCount(1);
+				int amountToAdd=1;
+				
+				if(fullStack) {
+					amountToAdd = Math.min(itemStackIn.getCount(), itemStackIn.getMaxStackSize());
+				}		
+				
+				itemStack.setCount(amountToAdd);
 				inventoryToInsert.setInventorySlotContents(i, itemStack);
-				itemStackIn.shrink(1);
+				itemStackIn.shrink(amountToAdd);
 				if (itemStackIn.getCount() <= 0) {
 					itemStackIn.setCount(0);
 				}
-				return true;
+				if (itemStackIn.getCount() == 0) return true; //all has been inserted
 			}
 		}
 
-		return false;
+		return !(initialCount==itemStackIn.getCount());//items have been inserted
 	}
 }
